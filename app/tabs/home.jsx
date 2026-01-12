@@ -43,7 +43,7 @@ const HomeScreen = () => {
 };
 
 export default HomeScreen;
-
+/*
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#efefefff",
@@ -68,3 +68,4 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
 });
+*/

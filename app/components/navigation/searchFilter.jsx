@@ -46,10 +46,8 @@ export default SearchFilter;
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#ffffff",
     padding: 10,
-    borderRadius: 10,
-    marginTop: 10,
+    height: 600,
   },
   recipesContainer: {
     width: "50%",

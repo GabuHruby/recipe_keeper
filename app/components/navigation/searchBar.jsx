@@ -52,13 +52,12 @@ export default SearchBar;
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#efefefff",
-    margin: 15,
-    marginTop: 0,
-    width: "90%",
   },
   navigator: {
     alignItems: "center",
     flexDirection: "row",
+    margin: 15,
+    marginTop: 0,
     marginBottom: 10,
   },
   searchContainer: {
