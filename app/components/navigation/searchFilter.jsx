@@ -34,7 +34,9 @@ const SearchFilter = ({ data, search, setSearch }) => {
         renderItem={renderItem}
         //Key extractor assigns a unique key to each item in the list
         keyExtractor={(item, index) =>
-          item.id?.toString() ?? item + "-" + index.toString()
+          item._id?.toString() ??
+          item.id?.toString() ??
+          item + "-" + index.toString()
         }
         numColumns={2}
       />

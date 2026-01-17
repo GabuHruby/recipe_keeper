@@ -9,12 +9,18 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "expo": "~54.0.24",
     "expo-constants": "~18.0.10",
+    "expo-document-picker": "~14.0.8",
+    "expo-image-picker": "~17.0.10",
     "expo-linking": "~8.0.9",
     "expo-router": "~6.0.15",
     "expo-status-bar": "~3.0.8",
+    "express": "^5.2.1",
+    "mongoose": "^9.1.4",
     "react": "19.1.0",
+    "react-dom": "^19.1.0",
     "react-native": "0.81.5",
     "react-native-feather": "^1.1.2",
     "react-native-safe-area-context": "~5.6.0",
