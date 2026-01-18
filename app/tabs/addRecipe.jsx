@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   Alert,
   Image,
@@ -12,9 +12,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import API_BASE_URL from "../../config/api";
 
 const AddRecipe = () => {
+  const navigation = useNavigation();
+  const scrollRef = useRef(null);
   const [name, setName] = useState("");
   const [timeMinutes, setTimeMinutes] = useState("");
   const [ingredients, setIngredients] = useState([
@@ -23,6 +26,24 @@ const AddRecipe = () => {
   const [instructions, setInstructions] = useState("");
   const [imageUri, setImageUri] = useState(null);
   const [error, setError] = useState("");
+
+  const resetForm = () => {
+    setName("");
+    setTimeMinutes("");
+    setIngredients([{ id: `${Date.now()}`, name: "", amount: "" }]);
+    setInstructions("");
+    setImageUri(null);
+    setError("");
+    //makes the screen scroll to the top when leaving
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  };
+
+  //goes to top of screen when navigated to every time
+  useFocusEffect(
+    useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
 
   //Choose a photo - more details: https://docs.expo.dev/versions/latest/sdk/imagepicker/
   const handlePickPhoto = async () => {
@@ -120,6 +141,7 @@ const AddRecipe = () => {
       instructions: instructions.trim(),
       imageUri,
     };
+    //Send recipe to server
     try {
       const response = await fetch(`${API_BASE_URL}/recipes`, {
         method: "POST",
@@ -129,7 +151,9 @@ const AddRecipe = () => {
       if (!response.ok) {
         throw new Error("Failed to save recipe.");
       }
-      Alert.alert("Recipe saved", "Your recipe is now available to everyone.");
+      resetForm();
+      Alert.alert("Recipe saved!");
+      navigation.navigate("Personal");
     } catch (err) {
       console.log("SAVE RECIPE ERROR:", err);
       setError("Could not save recipe. Please try again.");
@@ -140,8 +164,18 @@ const AddRecipe = () => {
     // SafeAreaView adds natural padding to avoid things like the ios notch
     <SafeAreaView style={styles.safeArea}>
       {/* Loads everything at once unlike the FlatList used for recipes */}
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Add Recipe</Text>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Add Recipe</Text>
+          <TouchableOpacity
+            style={styles.resetButton}
+            onPress={resetForm}
+            accessibilityRole="button"
+            accessibilityLabel="Reset recipe"
+          >
+            <Text style={styles.resetButtonText}>Reset</Text>
+          </TouchableOpacity>
+        </View>
 
         {/*NAME SECTION*/}
         <View style={styles.section}>
@@ -295,7 +329,23 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "700",
     color: "#2b2b2b",
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 20,
+  },
+  resetButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: "#f1e6dc",
+  },
+  resetButtonText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#8b6f5f",
   },
   section: {
     marginBottom: 20,
