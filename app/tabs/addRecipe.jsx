@@ -38,6 +38,40 @@ const AddRecipe = () => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   };
 
+  const getImageMeta = (uri) => {
+    const cleanUri = uri.split("?")[0];
+    const fileName = cleanUri.split("/").pop() || `recipe-${Date.now()}.jpg`;
+    const ext = (fileName.split(".").pop() || "jpg").toLowerCase();
+    const typeMap = {
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      png: "image/png",
+      webp: "image/webp",
+      heic: "image/heic",
+      heif: "image/heif",
+    };
+    return { name: fileName, type: typeMap[ext] || "image/jpeg" };
+  };
+
+  const uploadImage = async (uri) => {
+    const { name, type } = getImageMeta(uri);
+    const formData = new FormData();
+    formData.append("file", {
+      uri,
+      name,
+      type,
+    });
+    const response = await fetch(`${API_BASE_URL}/uploads`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!response.ok) {
+      throw new Error("Image upload failed.");
+    }
+    const data = await response.json();
+    return data.url;
+  };
+
   //goes to top of screen when navigated to every time
   useFocusEffect(
     useCallback(() => {
@@ -129,6 +163,7 @@ const AddRecipe = () => {
       return;
     }
     setError("");
+    let uploadedImageUrl = imageUri;
     const recipe = {
       name: name.trim(),
       timeMinutes: timeMinutes.trim(),
@@ -139,10 +174,14 @@ const AddRecipe = () => {
           amount: item.amount.trim(),
         })),
       instructions: instructions.trim(),
-      imageUri,
+      imageUri: uploadedImageUrl,
     };
     //Send recipe to server
     try {
+      if (imageUri) {
+        uploadedImageUrl = await uploadImage(imageUri);
+        recipe.imageUri = uploadedImageUrl;
+      }
       const response = await fetch(`${API_BASE_URL}/recipes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
