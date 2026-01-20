@@ -52,6 +52,7 @@ const SearchFilter = ({ data, search, setSearch }) => {
   return (
     <View style={styles.container}>
       <FlatList
+        style={styles.flatList}
         data={filteredData}
         renderItem={renderItem}
         //Key extractor assigns a unique key to each item in the list
@@ -70,15 +71,17 @@ export default SearchFilter;
 
 const styles = StyleSheet.create({
   container: {
-    padding: 10,
     height: 600,
+  },
+  flatList: {
+    padding: 10,
   },
   recipesContainer: {
     width: "50%",
     marginVertical: 10,
   },
   recipeBox: {
-    width: "92%",
+    width: "89%",
     alignSelf: "center",
     borderRadius: 8,
     backgroundColor: "#f7f2ec",

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import Logo from "../../assets/images/ia_logo.png";
 import {
-  Alert,
   Image,
   StyleSheet,
   Text,
