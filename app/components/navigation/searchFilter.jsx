@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, FlatList } from "react-native";
+import { StyleSheet, Text, View, FlatList, Image } from "react-native";
 import React, { useMemo } from "react";
 
 const SearchFilter = ({ data, search, setSearch }) => {
@@ -15,15 +15,37 @@ const SearchFilter = ({ data, search, setSearch }) => {
 
   const renderItem = ({ item }) => (
     <View style={styles.recipesContainer}>
-      <Text style={styles.recipeName}>{item.name}</Text>
-      <Text
-        style={{
-          borderColor: "gray",
-          borderWidth: 1,
-          height: 1,
-          marginTop: 1,
-        }}
-      />
+      <View style={styles.recipeBox}>
+        <View style={styles.recipeInner}>
+          {item.imageUri ? (
+            <Image
+              source={{ uri: item.imageUri }}
+              style={styles.recipeImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <Image
+              source={{
+                uri: "https://res.cloudinary.com/dq6ag1bv3/image/upload/v1768752836/No_Image_Icon_Beige_rpyey7.jpg",
+              }}
+              style={styles.recipeImage}
+              resizeMode="cover"
+            />
+          )}
+          <Text style={styles.recipeName}>{item.name}</Text>
+          <Text style={styles.recipeAuthor}>Placeholder</Text>
+          <View style={styles.recipeBottom}>
+            {item.timeMinutes ? (
+              <Text style={styles.recipeTime}>{item.timeMinutes} min</Text>
+            ) : (
+              <Text style={styles.recipeTime}>--</Text>
+            )}
+            <View style={styles.recipeOptionsContainer}>
+              <Text style={styles.recipeOptions}>...</Text>
+            </View>
+          </View>
+        </View>
+      </View>
     </View>
   );
 
@@ -54,11 +76,61 @@ const styles = StyleSheet.create({
   recipesContainer: {
     width: "50%",
     marginVertical: 10,
-    alignItems: "center",
+  },
+  recipeBox: {
+    width: "92%",
+    alignSelf: "center",
+    borderRadius: 8,
+    backgroundColor: "#f7f2ec",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  recipeInner: {
+    borderRadius: 8,
+    overflow: "hidden",
+    paddingBottom: 10,
+  },
+  recipeImage: {
+    width: "100%",
+    height: 150,
+    marginBottom: 5,
+    backgroundColor: "#eee",
+    alignSelf: "center",
   },
   recipeName: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "bold",
     color: "#333",
+    paddingLeft: 8,
+    paddingTop: 3,
+  },
+  recipeAuthor: {
+    fontSize: 12,
+    color: "#666",
+    paddingLeft: 8,
+    marginTop: 2,
+  },
+  recipeBottom: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 8,
+    marginTop: 10,
+  },
+  recipeTime: {
+    fontSize: 12,
+    paddingTop: 14,
+    color: "#666",
+  },
+  recipeOptionsContainer: {
+    alignItems: "center",
+    paddingBottom: 10,
+    paddingRight: 10,
+  },
+  recipeOptions: {
+    fontSize: 25,
+    color: "#666",
   },
 });

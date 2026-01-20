@@ -29,7 +29,7 @@ const HomeScreen = () => {
   );
 
   return (
-    <SafeAreaView>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#f7f2ec" }}>
       <SearchBar recipes={recipes} />
     </SafeAreaView>
   );

@@ -51,7 +51,7 @@ export default SearchBar;
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#efefefff",
+    backgroundColor: "#f7f2ec",
   },
   navigator: {
     alignItems: "center",
@@ -65,7 +65,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     width: "90%",
-    backgroundColor: "#cececeff",
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#e1d7cd",
     borderRadius: 15,
   },
   searchIcon: {

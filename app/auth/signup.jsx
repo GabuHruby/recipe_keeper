@@ -1,5 +1,7 @@
+import { useState } from "react";
 import Logo from "../../assets/images/ia_logo.png";
 import {
+  Alert,
   Image,
   StyleSheet,
   Text,
@@ -7,8 +9,40 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import API_BASE_URL from "../../config/api";
 
 const SignupScreen = ({ auth, setAuth }) => {
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSignup = async () => {
+    if (!username.trim() || !email.trim() || !password) {
+      setError("Please fill in all fields.");
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: username.trim(),
+          email: email.trim(),
+          password,
+        }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to create account.");
+      }
+      setError("");
+      setAuth("loggedIn");
+    } catch (err) {
+      setError(err.message || "Please try again.");
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Image source={Logo} style={styles.logo} />
@@ -19,20 +53,30 @@ const SignupScreen = ({ auth, setAuth }) => {
         style={styles.usernameInput}
         placeholder="Username"
         placeholderTextColor="#414141ff"
+        value={username}
+        onChangeText={setUsername}
       />
       <TextInput
         style={styles.emailInput}
         placeholder="Email"
         placeholderTextColor="#414141ff"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        keyboardType="email-address"
       />
       <TextInput
         style={styles.passwordInput}
         placeholder="Password"
         placeholderTextColor="#414141ff"
         secureTextEntry={true}
+        value={password}
+        onChangeText={setPassword}
       />
 
-      <TouchableOpacity onPress={() => setAuth("loggedIn")}>
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+      <TouchableOpacity onPress={handleSignup}>
         <Text style={styles.log_in}>Sign Up</Text>
       </TouchableOpacity>
 
@@ -127,6 +171,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#4CAF50",
     fontWeight: "bold",
+  },
+  errorText: {
+    color: "#b3261e",
+    marginBottom: 5,
+    fontWeight: "600",
   },
 });
 

@@ -9,7 +9,10 @@ const mongoose = require("mongoose");
 const multer = require("multer");
 //Cloudinary stores images in the cloud
 const { v2: cloudinary } = require("cloudinary");
+//Bcrypt hashes passwords
+const bcrypt = require("bcryptjs");
 const Recipe = require("./models/Recipe");
+const User = require("./models/User");
 
 const app = express();
 
@@ -46,6 +49,61 @@ app.post("/recipes", async (req, res) => {
     res.status(201).json(recipe);
   } catch (err) {
     res.status(400).json({ error: "Invalid recipe data." });
+  }
+});
+
+app.post("/users/signup", async (req, res) => {
+  try {
+    const username = (req.body.username || "").trim();
+    const email = (req.body.email || "").trim().toLowerCase();
+    const password = req.body.password || "";
+
+    //Error prevention
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: "Missing required fields." });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await User.create({ username, email, passwordHash });
+    res.status(201).json({
+      id: user._id,
+      username: user.username,
+      email: user.email,
+    });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({ error: "Email already in use." });
+    }
+    res.status(500).json({ error: "Failed to create user." });
+  }
+});
+
+app.post("/users/login", async (req, res) => {
+  try {
+    const email = (req.body.email || "").trim().toLowerCase();
+    const password = req.body.password || "";
+
+    //Check for missing fields
+    if (!email || !password) {
+      return res.status(400).json({ error: "Missing required fields." });
+    }
+
+    //User.findOne finds a single user that has the correct email
+    const user = await User.findOne({ email });
+    //If there is not then return invalid
+    if (!user) {
+      return res.status(401).json({ error: "Invalid credentials." });
+    }
+
+    //Check if passwords are the same after ensuring there is a user with that email
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch) {
+      return res.status(401).json({ error: "Invalid credentials." });
+    }
+
+    res.json({ id: user._id, username: user.username, email: user.email });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to log in." });
   }
 });
 
