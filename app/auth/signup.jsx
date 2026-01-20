@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import API_BASE_URL from "../../config/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const SignupScreen = ({ auth, setAuth }) => {
   const [username, setUsername] = useState("");
@@ -36,6 +37,7 @@ const SignupScreen = ({ auth, setAuth }) => {
         throw new Error(data.error || "Failed to create account.");
       }
       setError("");
+      await AsyncStorage.setItem("isLoggedIn", JSON.stringify(true));
       setAuth("loggedIn");
     } catch (err) {
       setError(err.message || "Please try again.");

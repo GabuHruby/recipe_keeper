@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import API_BASE_URL from "../../config/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const LogInScreen = ({ auth, setAuth }) => {
   const [email, setEmail] = useState("");
@@ -38,6 +39,7 @@ const LogInScreen = ({ auth, setAuth }) => {
       }
 
       setError("");
+      await AsyncStorage.setItem("isLoggedIn", JSON.stringify(true));
       setAuth("loggedIn");
     } catch (err) {
       setError(err.message || "Please try again.");
