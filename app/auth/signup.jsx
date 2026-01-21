@@ -36,8 +36,14 @@ const SignupScreen = ({ auth, setAuth }) => {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.error || "Failed to create account.");
       }
+      const data = await response.json();
       setError("");
-      await AsyncStorage.setItem("isLoggedIn", JSON.stringify(true));
+      await AsyncStorage.multiSet([
+        ["isLoggedIn", JSON.stringify(true)],
+        ["userId", data.id || ""],
+        ["username", data.username || ""],
+        ["email", data.email || ""],
+      ]);
       setAuth("loggedIn");
     } catch (err) {
       setError(err.message || "Please try again.");

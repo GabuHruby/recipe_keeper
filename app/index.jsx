@@ -35,7 +35,7 @@ const Index = () => {
   }
 
   if (auth === "loggedIn") {
-    return <BottomNav />;
+    return <BottomNav setAuth={setAuth} />;
   } else if (auth === "signup") {
     return <SignUp auth={auth} setAuth={setAuth} />;
   } else {

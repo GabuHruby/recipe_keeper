@@ -14,6 +14,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import API_BASE_URL from "../../config/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const AddRecipe = () => {
   const navigation = useNavigation();
@@ -175,6 +176,8 @@ const AddRecipe = () => {
         })),
       instructions: instructions.trim(),
       imageUri: uploadedImageUrl,
+      author: (await AsyncStorage.getItem("username")) || "",
+      createdBy: (await AsyncStorage.getItem("userId")) || "",
     };
     //Send recipe to server
     try {

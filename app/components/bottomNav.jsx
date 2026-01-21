@@ -34,7 +34,7 @@ const CustomTabBarButton = ({ children, onPress }) => (
   </TouchableOpacity>
 );
 
-const BottomNav = () => {
+const BottomNav = ({ setAuth }) => {
   return (
     <Tab.Navigator
       screenOptions={{
@@ -121,7 +121,7 @@ const BottomNav = () => {
       />
       <Tab.Screen
         name="Profile"
-        component={ProfileScreen}
+        children={() => <ProfileScreen setAuth={setAuth} />}
         options={{
           tabBarIcon: ({ focused }) => (
             <Image

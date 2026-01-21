@@ -15,6 +15,8 @@ const RecipeSchema = new mongoose.Schema(
     ingredients: { type: [IngredientSchema], default: [] },
     instructions: { type: String, trim: true },
     imageUri: { type: String, trim: true },
+    author: { type: String, required: true, trim: true },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   },
   { timestamps: true }
 );

@@ -33,7 +33,7 @@ const SearchFilter = ({ data, search, setSearch }) => {
             />
           )}
           <Text style={styles.recipeName}>{item.name}</Text>
-          <Text style={styles.recipeAuthor}>Placeholder</Text>
+          <Text style={styles.recipeAuthor}>{item.author || "Unknown"}</Text>
           <View style={styles.recipeBottom}>
             {item.timeMinutes ? (
               <Text style={styles.recipeTime}>{item.timeMinutes} min</Text>

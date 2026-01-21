@@ -107,6 +107,47 @@ app.post("/users/login", async (req, res) => {
   }
 });
 
+app.post("/users/me", async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    if (!userId) {
+      return res.status(400).json({ error: "Missing user ID." });
+    }
+    const user = await User.findById(userId).populate("favoriteRecipes");
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+    res.json({
+      username: user.username,
+      email: user.email,
+      profilePictureUri: user.profilePictureUri,
+      favoriteRecipes: user.favoriteRecipes,
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch user data." });
+  }
+});
+
+app.get("/users/:id", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+    res.json({
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      favoriteRecipes: user.favoriteRecipes || [],
+      profilePictureUri: user.profilePictureUri || "",
+      recipesCreated: user.recipesCreated || [],
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch user." });
+  }
+});
+
 //Expects a file and puts it into req.file
 app.post("/uploads", upload.single("file"), async (req, res) => {
   //If no file was uploaded
