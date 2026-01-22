@@ -46,6 +46,12 @@ app.get("/recipes", async (req, res) => {
 app.post("/recipes", async (req, res) => {
   try {
     const recipe = await Recipe.create(req.body);
+    //add created recipe to user's recipesCreated array
+    const createdByUser = await User.findById(req.body.createdBy);
+    if (createdByUser) {
+      createdByUser.recipesCreated.push(recipe._id);
+      await createdByUser.save();
+    }
     res.status(201).json(recipe);
   } catch (err) {
     res.status(400).json({ error: "Invalid recipe data." });
@@ -101,36 +107,16 @@ app.post("/users/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials." });
     }
 
+    console.log("User logged in:", user._id);
     res.json({ id: user._id, username: user.username, email: user.email });
   } catch (err) {
     res.status(500).json({ error: "Failed to log in." });
   }
 });
 
-app.post("/users/me", async (req, res) => {
-  try {
-    const userId = req.body.userId;
-    if (!userId) {
-      return res.status(400).json({ error: "Missing user ID." });
-    }
-    const user = await User.findById(userId).populate("favoriteRecipes");
-    if (!user) {
-      return res.status(404).json({ error: "User not found." });
-    }
-    res.json({
-      username: user.username,
-      email: user.email,
-      profilePictureUri: user.profilePictureUri,
-      favoriteRecipes: user.favoriteRecipes,
-    });
-
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch user data." });
-  }
-});
-
 app.get("/users/:id", async (req, res) => {
   try {
+    //:id puts anything after /users/ into req.params.id
     const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ error: "User not found." });
@@ -145,6 +131,19 @@ app.get("/users/:id", async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch user." });
+  }
+});
+
+//Get recipes from a specific user for the personal screen
+app.get("/users/:id/recipes", async (req, res) => {
+  try {
+    const recipes = await User.findById(req.params.id).populate("recipesCreated");
+    if (!recipes) {
+      return res.status(404).json({ error: "There are no recipes for this user." });
+    }
+    res.json(recipes.recipesCreated || []);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch user's recipes." });
   }
 });
 
