@@ -1,13 +1,63 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import HomeScreen from "../tabs/home";
 import CartScreen from "../tabs/cart";
 import PersonalScreen from "../tabs/personal";
 import ProfileScreen from "../tabs/profile";
 import AddRecipeScreen from "../tabs/addRecipe";
+import RecipeDetailScreen from "./recipe/recipeDetail";
+import EditRecipeScreen from "./recipe/editRecipe";
 
 const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
+
+const HomeStackScreen = () => (
+  <Stack.Navigator>
+    <Stack.Screen
+      name="HomeList"
+      component={HomeScreen}
+      options={{ headerShown: false }}
+    />
+    <Stack.Screen
+      name="RecipeDetail"
+      component={RecipeDetailScreen}
+      options={{ headerShown: false }}
+    />
+    <Stack.Screen
+      name="EditRecipe"
+      component={EditRecipeScreen}
+      options={{ headerShown: false }}
+    />
+  </Stack.Navigator>
+);
+
+const PersonalStackScreen = () => (
+  <Stack.Navigator>
+    <Stack.Screen
+      name="PersonalList"
+      component={PersonalScreen}
+      options={{ headerShown: false }}
+    />
+    <Stack.Screen
+      name="RecipeDetail"
+      component={RecipeDetailScreen}
+      options={({ navigation }) => ({
+        title: "Recipe",
+        headerBackVisible: false,
+        headerLeft: () => (
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={{ paddingHorizontal: 12 }}
+          >
+            <Text style={{ color: "#e32f45", fontWeight: "600" }}>Back</Text>
+          </TouchableOpacity>
+        ),
+      })}
+    />
+  </Stack.Navigator>
+);
 
 const CustomTabBarButton = ({ children, onPress }) => (
   <TouchableOpacity
@@ -54,7 +104,7 @@ const BottomNav = ({ setAuth }) => {
     >
       <Tab.Screen
         name="Home"
-        component={HomeScreen}
+        component={HomeStackScreen}
         options={{
           tabBarIcon: ({ focused }) => (
             <Image
@@ -105,7 +155,7 @@ const BottomNav = ({ setAuth }) => {
       />
       <Tab.Screen
         name="Personal"
-        component={PersonalScreen}
+        component={PersonalStackScreen}
         options={{
           tabBarIcon: ({ focused }) => (
             <Image

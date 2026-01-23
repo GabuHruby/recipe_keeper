@@ -1,7 +1,16 @@
-import { StyleSheet, Text, View, FlatList, Image } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  FlatList,
+  Image,
+  TouchableOpacity,
+} from "react-native";
 import React, { useMemo } from "react";
+import { useNavigation } from "@react-navigation/native";
 
 const SearchFilter = ({ data, search, setSearch }) => {
+  const navigation = useNavigation();
   //useMemo will remember the filtered data and will only recompute when data or search changes
   const filteredData = useMemo(() => {
     if (search === "") {
@@ -15,7 +24,10 @@ const SearchFilter = ({ data, search, setSearch }) => {
 
   const renderItem = ({ item }) => (
     <View style={styles.recipesContainer}>
-      <View style={styles.recipeBox}>
+      <TouchableOpacity
+        style={styles.recipeBox}
+        onPress={() => navigation.navigate("RecipeDetail", { recipe: item })}
+      >
         <View style={styles.recipeInner}>
           {item.imageUri ? (
             <Image
@@ -45,7 +57,7 @@ const SearchFilter = ({ data, search, setSearch }) => {
             </View>
           </View>
         </View>
-      </View>
+      </TouchableOpacity>
     </View>
   );
 

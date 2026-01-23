@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-navigation/stack": "^7.6.16",
     "cors": "^2.8.5",
     "expo": "~54.0.24",
     "expo-constants": "~18.0.10",
