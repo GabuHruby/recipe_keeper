@@ -6,14 +6,17 @@ import {
   Image,
   TouchableOpacity,
 } from "react-native";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
+import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import API_BASE_URL from "../../../config/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const RecipeDetail = ({ route }) => {
   const navigation = useNavigation();
   const [isOwner, setIsOwner] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
   //Safety check to ensure recipe data exists
   const recipe = route?.params?.recipe;
 
@@ -34,13 +37,45 @@ const RecipeDetail = ({ route }) => {
     } else {
       setIsOwner(false);
     }
+  }, [recipe]);
+
+  const loadFavorites = useCallback(async () => {
+    const storedId = await AsyncStorage.getItem("userId");
+    const userDetails = await fetch(`${API_BASE_URL}/users/${storedId}`);
+    if (userDetails.ok) {
+      const userData = await userDetails.json();
+      const favorites = userData.favoriteRecipes || [];
+      if (favorites.includes(recipe._id)) {
+        setIsFavorite(true);
+      } else {
+        setIsFavorite(false);
+      }
+    }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
       loadUserData();
+      loadFavorites();
     }, [])
   );
+
+  const updateFavorites = async () => {
+    const storedId = await AsyncStorage.getItem("userId");
+    setIsFavorite(!isFavorite);
+    try {
+      await fetch(`${API_BASE_URL}/users/${storedId}/favorites`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipeId: recipe._id,
+          add: !isFavorite,
+        }),
+      });
+    } catch (err) {
+      //Do nothing
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -62,7 +97,18 @@ const RecipeDetail = ({ route }) => {
                   Edit
                 </Text>
               </TouchableOpacity>
-            ) : null}
+            ) : (
+              <TouchableOpacity
+                onPress={updateFavorites}
+                style={styles.headerButton}
+              >
+                {isFavorite ? (
+                  <Ionicons name="heart" size={24} color="red" />
+                ) : (
+                  <Ionicons name="heart-outline" size={24} color="black" />
+                )}
+              </TouchableOpacity>
+            )}
           </View>
 
           <Text style={styles.title}>{recipe.name}</Text>
@@ -77,19 +123,7 @@ const RecipeDetail = ({ route }) => {
               resizeMode="cover"
             />
           ) : (
-            <View style={styles.emptyImage}>
-              <TouchableOpacity
-                style={styles.chooseImageButton}
-                onPress={() => {}}
-                accessibilityRole="button"
-                accessibilityLabel="Choose image"
-              >
-                <Image
-                  source={require("../../../assets/icons/camera.png")}
-                  style={styles.camera}
-                />
-              </TouchableOpacity>
-            </View>
+            <View style={styles.emptyImage}></View>
           )}
 
           {Array.isArray(recipe.ingredients) && recipe.ingredients.length ? (
@@ -137,6 +171,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     backgroundColor: "#ffffff",
     borderRadius: 12,
+    height: 36,
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyImage: {
     width: "100%",

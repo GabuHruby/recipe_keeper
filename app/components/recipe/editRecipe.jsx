@@ -5,9 +5,13 @@ import {
   View,
   Image,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import API_BASE_URL from "../../../config/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const EditRecipe = ({ route }) => {
@@ -26,6 +30,21 @@ const EditRecipe = ({ route }) => {
     );
   }
 
+  const deleteRecipe = () => {
+    //I know they can only be in this page if they are the owner, but just in case someone makes their way to this page not being the owner
+    try {
+      fetch(`${API_BASE_URL}/recipes/${recipe._id}`, {
+        method: "DELETE",
+      }).then(() => {
+        navigation.goBack();
+        navigation.goBack();
+        Alert.alert("Recipe deleted successfully.");
+      });
+    } catch (error) {
+      console.error("Failed to delete recipe:", error);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -36,11 +55,8 @@ const EditRecipe = ({ route }) => {
           >
             <Text style={{ color: "#000000", fontWeight: "600" }}>Back</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => navigation.navigate("xx")}
-            style={styles.headerButton}
-          >
-            <Text style={{ color: "#000000", fontWeight: "600" }}>Edit</Text>
+          <TouchableOpacity onPress={deleteRecipe} style={styles.headerButton}>
+            <Text style={{ color: "#000000", fontWeight: "600" }}>Delete</Text>
           </TouchableOpacity>
         </View>
 

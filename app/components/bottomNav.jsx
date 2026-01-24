@@ -43,18 +43,12 @@ const PersonalStackScreen = () => (
     <Stack.Screen
       name="RecipeDetail"
       component={RecipeDetailScreen}
-      options={({ navigation }) => ({
-        title: "Recipe",
-        headerBackVisible: false,
-        headerLeft: () => (
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={{ paddingHorizontal: 12 }}
-          >
-            <Text style={{ color: "#e32f45", fontWeight: "600" }}>Back</Text>
-          </TouchableOpacity>
-        ),
-      })}
+      options={{ headerShown: false }}
+    />
+    <Stack.Screen
+      name="EditRecipe"
+      component={EditRecipeScreen}
+      options={{ headerShown: false }}
     />
   </Stack.Navigator>
 );

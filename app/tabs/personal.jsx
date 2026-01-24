@@ -18,7 +18,9 @@ const Personal = () => {
         throw new Error("Failed to fetch recipes.");
       }
       const data = await response.json();
-      setRecipes(data);
+      //Data is an dictionary that has recipesCreate: recipes, favoriteRecipes: recipes
+      const recipes = [...data.recipesCreated, ...data.favoriteRecipes];
+      setRecipes(recipes);
     } catch (err) {
       setRecipes([]);
     }

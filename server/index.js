@@ -28,6 +28,19 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+//public ID is made up of folder path and file name without extension
+const getCloudinaryPublicId = (imageUrl) => {
+  //get last part of the url after the last /
+  const parts = imageUrl.split("/");
+  const fileName = parts[parts.length - 1];
+  const publicIdWithExtension = fileName.split(".")[0];
+  //Get folder path
+  const folder = parts.slice(parts.indexOf("recipes")).slice(0, -1).join("/");
+  //Combine folder and file name without extension
+  const publicId = `${folder}/${publicIdWithExtension}`;
+  return publicId;
+};
+
 //Test to see if server is running
 app.get("/", (req, res) => {
   res.json({ ok: true });
@@ -55,6 +68,34 @@ app.post("/recipes", async (req, res) => {
     res.status(201).json(recipe);
   } catch (err) {
     res.status(400).json({ error: "Invalid recipe data." });
+  }
+});
+
+//delete recipe
+app.delete("/recipes/:id", async (req, res) => {
+  try {
+    const recipe = await Recipe.findById(req.params.id);
+    if (!recipe) {
+      return res.status(404).json({ error: "Recipe not found." });
+    }
+    if (recipe.imageUri) {
+      const publicId = getCloudinaryPublicId(recipe.imageUri);
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
+      }
+    }
+    await Recipe.deleteOne({ _id: recipe._id });
+    //remove recipe from user's recipesCreated array
+    const createdByUser = await User.findById(recipe.createdBy);
+    if (createdByUser) {
+      createdByUser.recipesCreated = createdByUser.recipesCreated.filter(
+        (recipeId) => recipeId.toString() !== req.params.id
+      );
+      await createdByUser.save();
+    }
+    res.json({ message: "Recipe deleted successfully." });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete recipe." });
   }
 });
 
@@ -137,13 +178,42 @@ app.get("/users/:id", async (req, res) => {
 //Get recipes from a specific user for the personal screen
 app.get("/users/:id/recipes", async (req, res) => {
   try {
-    const recipes = await User.findById(req.params.id).populate("recipesCreated");
+    //add favoriteRecipe as well
+    const recipes = await User.findById(req.params.id).populate("recipesCreated").populate("favoriteRecipes");
     if (!recipes) {
       return res.status(404).json({ error: "There are no recipes for this user." });
     }
-    res.json(recipes.recipesCreated || []);
+    res.json({
+      recipesCreated: recipes.recipesCreated || [],
+      favoriteRecipes: recipes.favoriteRecipes || [],
+    });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch user's recipes." });
+  }
+});
+
+app.put("/users/:id/favorites", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+    const { recipeId, add } = req.body;
+    if (add) {
+      //Add to favorites
+      if (!user.favoriteRecipes.includes(recipeId)) {
+        user.favoriteRecipes.push(recipeId);
+      }
+    } else {
+      //Remove from favorites
+      user.favoriteRecipes = user.favoriteRecipes.filter(
+        (id) => id.toString() !== recipeId
+      );
+    }
+    await user.save();
+    res.json({ message: "Favorites updated successfully." });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update favorites." });
   }
 });
 
