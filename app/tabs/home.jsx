@@ -4,6 +4,10 @@ import SearchBar from "../components/navigation/searchBar";
 import { useFocusEffect } from "@react-navigation/native";
 import API_BASE_URL from "../../config/api";
 
+//Plan for future: Make the home screen only for the family.
+// If you have not joined a family yet, it will appear a box saying JOIN FAMILY.
+// When you join the family, all the recipes frm the users in that family will appear in the home screen.
+// The profile screen will show the users in the family, and you can leave the family if you want to.
 const HomeScreen = () => {
   const [recipes, setRecipes] = useState([]);
 

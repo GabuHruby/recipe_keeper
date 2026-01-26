@@ -71,6 +71,50 @@ app.post("/recipes", async (req, res) => {
   }
 });
 
+//get a single recipe by id
+app.get("/recipes/:id", async (req, res) => {
+  try {
+    const recipe = await Recipe.findById(req.params.id);
+    if (!recipe) {
+      return res.status(404).json({ error: "Recipe not found." });
+    }
+    res.json(recipe);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch recipe." });
+  }
+});
+
+//update recipe
+app.put("/recipes/:id", async (req, res) => {
+  try {
+    const existing = await Recipe.findById(req.params.id);
+    if (!existing) {
+      return res.status(404).json({ error: "Recipe not found." });
+    }
+
+    if (
+      //Object is a safe way to check if property exists
+      //If the imageUri is being changed, delete the old one
+      Object.prototype.hasOwnProperty.call(req.body, "imageUri") &&
+      existing.imageUri &&
+      req.body.imageUri !== existing.imageUri
+    ) {
+      const publicId = getCloudinaryPublicId(existing.imageUri);
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
+      }
+    }
+
+    const recipe = await Recipe.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    res.json(recipe);
+  } catch (err) {
+    res.status(400).json({ error: "Failed to update recipe." });
+  }
+});
+
 //delete recipe
 app.delete("/recipes/:id", async (req, res) => {
   try {

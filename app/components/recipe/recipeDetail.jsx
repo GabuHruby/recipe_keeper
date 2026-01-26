@@ -6,7 +6,7 @@ import {
   Image,
   TouchableOpacity,
 } from "react-native";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
@@ -17,8 +17,9 @@ const RecipeDetail = ({ route }) => {
   const navigation = useNavigation();
   const [isOwner, setIsOwner] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [recipeData, setRecipeData] = useState(route?.params?.recipe || null);
   //Safety check to ensure recipe data exists
-  const recipe = route?.params?.recipe;
+  const recipe = recipeData;
 
   if (!recipe) {
     return (
@@ -31,6 +32,9 @@ const RecipeDetail = ({ route }) => {
   }
 
   const loadUserData = useCallback(async () => {
+    if (!recipe) {
+      return;
+    }
     const storedId = await AsyncStorage.getItem("userId");
     if (storedId && recipe.createdBy && storedId === recipe.createdBy) {
       setIsOwner(true);
@@ -40,6 +44,9 @@ const RecipeDetail = ({ route }) => {
   }, [recipe]);
 
   const loadFavorites = useCallback(async () => {
+    if (!recipe) {
+      return;
+    }
     const storedId = await AsyncStorage.getItem("userId");
     const userDetails = await fetch(`${API_BASE_URL}/users/${storedId}`);
     if (userDetails.ok) {
@@ -53,11 +60,28 @@ const RecipeDetail = ({ route }) => {
     }
   }, []);
 
+  const refreshRecipe = useCallback(async () => {
+    if (!recipe?._id) {
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/recipes/${recipe._id}`);
+      if (!response.ok) {
+        return;
+      }
+      const data = await response.json();
+      setRecipeData(data);
+    } catch (err) {
+      //Do nothing
+    }
+  }, [recipe?._id]);
+
   useFocusEffect(
     useCallback(() => {
+      refreshRecipe();
       loadUserData();
       loadFavorites();
-    }, [])
+    }, [loadUserData, loadFavorites, refreshRecipe])
   );
 
   const updateFavorites = async () => {
@@ -123,27 +147,30 @@ const RecipeDetail = ({ route }) => {
               resizeMode="cover"
             />
           ) : (
-            <View style={styles.emptyImage}></View>
+            <View style={styles.divider} />
+            //<View style={styles.emptyImage}></View>
           )}
 
           {Array.isArray(recipe.ingredients) && recipe.ingredients.length ? (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Ingredients</Text>
+              <Text style={styles.sectionTitle}>Ingredients:</Text>
               {recipe.ingredients.map((item, index) => (
                 <Text key={`${item.name}-${index}`} style={styles.listItem}>
-                  {item.name}
+                  {index + 1}) {item.name}
                   {item.amount ? ` - ${item.amount}` : ""}
                 </Text>
               ))}
             </View>
           ) : null}
-
-          {recipe.instructions ? (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Instructions</Text>
+          <View style={styles.divider} />
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Instructions:</Text>
+            {recipe.instructions ? (
               <Text style={styles.instructions}>{recipe.instructions}</Text>
-            </View>
-          ) : null}
+            ) : (
+              <Text style={styles.instructions}>None</Text>
+            )}
+          </View>
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -175,6 +202,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  /*
   emptyImage: {
     width: "100%",
     height: 220,
@@ -184,6 +212,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  */
   chooseImageButton: {
     position: "absolute",
     top: 172,
@@ -202,7 +231,7 @@ const styles = StyleSheet.create({
   },
   image: {
     width: "100%",
-    height: 220,
+    height: 320,
     borderRadius: 16,
     marginBottom: 16,
     backgroundColor: "#eee",
@@ -216,6 +245,11 @@ const styles = StyleSheet.create({
   time: {
     fontSize: 14,
     color: "#d9534f",
+    marginBottom: 16,
+  },
+  divider: {
+    height: 5,
+    backgroundColor: "#e0e0e0",
     marginBottom: 16,
   },
   section: {
