@@ -212,6 +212,7 @@ app.get("/users/:id", async (req, res) => {
       email: user.email,
       favoriteRecipes: user.favoriteRecipes || [],
       profilePictureUri: user.profilePictureUri || "",
+      recipesInCart: user.recipesInCart || [],
       recipesCreated: user.recipesCreated || [],
     });
   } catch (err) {
@@ -258,6 +259,31 @@ app.put("/users/:id/favorites", async (req, res) => {
     res.json({ message: "Favorites updated successfully." });
   } catch (err) {
     res.status(500).json({ error: "Failed to update favorites." });
+  }
+});
+
+app.put("/users/:id/cart", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+    const { recipeId, add } = req.body;
+    if (add) {
+      //Add to cart
+      if (!user.recipesInCart.includes(recipeId)) {
+        user.recipesInCart.push(recipeId);
+      }
+    } else {
+      //Remove from cart
+      user.recipesInCart = user.recipesInCart.filter(
+        (id) => id.toString() !== recipeId
+      );
+    }
+    await user.save();
+    res.json({ message: "Cart updated successfully." });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update cart." });
   }
 });
 

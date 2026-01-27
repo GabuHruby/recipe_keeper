@@ -5,9 +5,11 @@ import {
   View,
   Image,
   TouchableOpacity,
+  Touchable,
 } from "react-native";
 import { useCallback, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import API_BASE_URL from "../../../config/api";
@@ -17,6 +19,7 @@ const RecipeDetail = ({ route }) => {
   const navigation = useNavigation();
   const [isOwner, setIsOwner] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [inCart, setInCart] = useState(false);
   const [recipeData, setRecipeData] = useState(route?.params?.recipe || null);
   //Safety check to ensure recipe data exists
   const recipe = recipeData;
@@ -43,7 +46,7 @@ const RecipeDetail = ({ route }) => {
     }
   }, [recipe]);
 
-  const loadFavorites = useCallback(async () => {
+  const loadFavoritesAndCart = useCallback(async () => {
     if (!recipe) {
       return;
     }
@@ -52,6 +55,14 @@ const RecipeDetail = ({ route }) => {
     if (userDetails.ok) {
       const userData = await userDetails.json();
       const favorites = userData.favoriteRecipes || [];
+      const cart = userData.recipesInCart || [];
+
+      if (cart.includes(recipe._id)) {
+        setInCart(true);
+      } else {
+        setInCart(false);
+      }
+
       if (favorites.includes(recipe._id)) {
         setIsFavorite(true);
       } else {
@@ -80,8 +91,8 @@ const RecipeDetail = ({ route }) => {
     useCallback(() => {
       refreshRecipe();
       loadUserData();
-      loadFavorites();
-    }, [loadUserData, loadFavorites, refreshRecipe])
+      loadFavoritesAndCart();
+    }, [loadUserData, loadFavoritesAndCart, refreshRecipe])
   );
 
   const updateFavorites = async () => {
@@ -101,6 +112,23 @@ const RecipeDetail = ({ route }) => {
     }
   };
 
+  const updateCart = async () => {
+    const storedId = await AsyncStorage.getItem("userId");
+    setInCart(!inCart);
+    try {
+      await fetch(`${API_BASE_URL}/users/${storedId}/cart`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipeId: recipe._id,
+          add: !inCart,
+        }),
+      });
+    } catch (err) {
+      //Do nothing
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={{ height: 740, paddingBottom: 40 }}>
@@ -112,27 +140,40 @@ const RecipeDetail = ({ route }) => {
             >
               <Text style={{ color: "#000000", fontWeight: "600" }}>Back</Text>
             </TouchableOpacity>
-            {isOwner ? (
+            <View style={{ flexDirection: "row", gap: 10 }}>
               <TouchableOpacity
-                onPress={() => navigation.navigate("EditRecipe", { recipe })}
+                onPress={updateCart}
                 style={styles.headerButton}
               >
-                <Text style={{ color: "#000000", fontWeight: "600" }}>
-                  Edit
-                </Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                onPress={updateFavorites}
-                style={styles.headerButton}
-              >
-                {isFavorite ? (
-                  <Ionicons name="heart" size={24} color="red" />
+                {inCart ? (
+                  <FontAwesome name="shopping-cart" size={24} color="red" />
                 ) : (
-                  <Ionicons name="heart-outline" size={24} color="black" />
+                  <FontAwesome name="shopping-cart" size={24} color="black" />
                 )}
               </TouchableOpacity>
-            )}
+
+              {isOwner ? (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("EditRecipe", { recipe })}
+                  style={styles.headerButton}
+                >
+                  <Text style={{ color: "#000000", fontWeight: "600" }}>
+                    Edit
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  onPress={updateFavorites}
+                  style={styles.headerButton}
+                >
+                  {isFavorite ? (
+                    <Ionicons name="heart" size={24} color="red" />
+                  ) : (
+                    <Ionicons name="heart-outline" size={24} color="black" />
+                  )}
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
           <Text style={styles.title}>{recipe.name}</Text>
