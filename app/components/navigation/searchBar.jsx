@@ -1,14 +1,66 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, View, TextInput } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  View,
+  TextInput,
+  Alert,
+  Platform,
+  ActionSheetIOS,
+} from "react-native";
 import { Feather } from "@expo/vector-icons";
 import SearchFilter from "../navigation/searchFilter";
 
-const SearchBar = ({ recipes }) => {
+const SearchBar = ({ recipes, filterOptions = [], favoriteIds, userId }) => {
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState(filterOptions[0]?.value || "none");
 
   const handlePress = () => {
-    // Placeholder for filter functionality
-    console.log("Filter button pressed");
+    //Leaves if there is no filter options
+    if (!filterOptions.length) {
+      return;
+    }
+    //Gets labels from filter options
+    const labels = filterOptions.map((option) => option.label);
+    //Check if user is on IOS or Android
+    /*if (Platform.OS === "ios") {
+      //https://reactnative.dev/docs/actionsheetios
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: [...labels, "Reset", "Cancel"],
+          cancelButtonIndex: labels.length + 1,
+          destructiveButtonIndex: labels.length,
+        },
+        (buttonIndex) => {
+          if (buttonIndex >= 0 && buttonIndex < labels.length) {
+            setFilter(filterOptions[buttonIndex].value);
+          } else if (buttonIndex === labels.length) {
+            setFilter("date_descending");
+          }
+          //Cancel button does nothing it just leaves
+        }
+      );
+      return;
+    }*/ //Tried using IOS but the cancel button was not wroking properly so I am going to leave it just in case but use android system as the default
+    //Android Alert as a fallback
+    Alert.alert(
+      "Sort & filter",
+      "Choose an option",
+      [
+        //Mapping only the labels from the filter options and setting the filter to that on press
+        ...filterOptions.map((option) => ({
+          text: option.label,
+          onPress: () => setFilter(option.value),
+        })),
+        {
+          text: "Reset",
+          style: "destructive",
+          onPress: () => setFilter("date_descending"),
+        },
+        { text: "Cancel", style: "cancel" },
+      ],
+      { cancelable: true }
+    );
   };
   return (
     <View style={styles.container}>
@@ -42,7 +94,14 @@ const SearchBar = ({ recipes }) => {
           />
         </Pressable>
       </View>
-      <SearchFilter data={recipes} search={search} setSearch={setSearch} />
+      <SearchFilter
+        data={recipes}
+        search={search}
+        setSearch={setSearch}
+        filter={filter}
+        favoriteIds={favoriteIds}
+        userId={userId}
+      />
     </View>
   );
 };

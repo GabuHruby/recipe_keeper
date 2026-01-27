@@ -6,21 +6,133 @@ import {
   Image,
   TouchableOpacity,
 } from "react-native";
-import React, { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 
-const SearchFilter = ({ data, search, setSearch }) => {
+const SearchFilter = ({
+  data,
+  search,
+  setSearch,
+  filter,
+  favoriteIds,
+  userId,
+}) => {
   const navigation = useNavigation();
+
   //useMemo will remember the filtered data and will only recompute when data or search changes
   const filteredData = useMemo(() => {
-    if (search === "") {
-      return data;
+    const searched =
+      search === ""
+        ? data
+        : data.filter((item) =>
+            item.name.toLowerCase().includes(search.toLowerCase())
+          );
+
+    //Set filtered depending on what has already been searched
+    let filtered = searched;
+
+    /*
+    if (filter === "favorites") {
+      filtered = searched.filter((item) => favoriteIds.includes(item._id));
+    } else if (filter === "created") {
+      filtered = searched.filter((item) => item.createdBy === userId);
     }
 
-    return data.filter((item) =>
-      item.name.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [data, search]); //Saved for next time
+    //Easy sorting
+    const sorters = {
+      date_descending: (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+      date_ascending: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+      name_ascending: (a, b) => a.name.localeCompare(b.name),
+      name_descending: (a, b) => b.name.localeCompare(a.name),
+    };
+    
+    //Sets sorter to one of the functions above
+    const sorter = sorters[filter];
+    if (sorter) {
+      filtered = [...filtered].sort(sorter);
+    }*/
+
+    //Manual Sorting
+    const manualSorters = {
+      favorites: (filtered) => {
+        return searched.filter((item) => favoriteIds.includes(item._id));
+      },
+      created: (filtered) => {
+        return searched.filter((item) => item.createdBy === userId);
+      },
+      date_descending: (filtered) => {
+        var sorted = [...filtered];
+        //Merge sort implementation
+        //https://www.youtube.com/watch?v=wXZyuJqNk9U
+        if (sorted.length <= 1) {
+          return sorted;
+        }
+        const mid = Math.floor(sorted.length / 2);
+        const leftArr = sorted.slice(0, mid);
+        const rightArr = sorted.slice(mid);
+        return merge(
+          manualSorters["date_descending"](leftArr),
+          manualSorters["date_descending"](rightArr)
+        );
+        function merge(leftArr, rightArr) {
+          const sortedArr = [];
+          while (leftArr.length && rightArr.length) {
+            if (
+              new Date(leftArr[0].createdAt) > new Date(rightArr[0].createdAt)
+            ) {
+              sortedArr.push(leftArr.shift());
+            } else {
+              sortedArr.push(rightArr.shift());
+            }
+          }
+          //If there are still elements in either array, add them to the end
+          return [...sortedArr, ...leftArr, ...rightArr];
+        }
+      },
+      date_ascending: (filtered) => {
+        //Calling the top method and reversing the result
+        return manualSorters["date_descending"](filtered).reverse();
+      },
+      name_ascending: (filtered) => {
+        var sorted = [...filtered];
+        //Merge sort implementation
+        //https://www.youtube.com/watch?v=wXZyuJqNk9U
+        if (sorted.length <= 1) {
+          return sorted;
+        }
+        const mid = Math.floor(sorted.length / 2);
+        const leftArr = sorted.slice(0, mid);
+        const rightArr = sorted.slice(mid);
+        return merge(
+          manualSorters["name_ascending"](leftArr),
+          manualSorters["name_ascending"](rightArr)
+        );
+        function merge(leftArr, rightArr) {
+          const sortedArr = [];
+          while (leftArr.length && rightArr.length) {
+            if (leftArr[0].name.localeCompare(rightArr[0].name) < 0) {
+              sortedArr.push(leftArr.shift());
+            } else {
+              sortedArr.push(rightArr.shift());
+            }
+          }
+          //If there are still elements in either array, add them to the end
+          return [...sortedArr, ...leftArr, ...rightArr];
+        }
+      },
+      name_descending: (filtered) => {
+        //Calling the top method and reversing the result
+        return manualSorters["name_ascending"](filtered).reverse();
+      },
+    };
+
+    const sorter = manualSorters[filter];
+    if (sorter) {
+      filtered = sorter([...filtered]);
+    }
+
+    return filtered;
+  }, [data, search, filter, favoriteIds, userId]); //Saved for next time
 
   const renderItem = ({ item }) => (
     <View style={styles.recipesContainer}>

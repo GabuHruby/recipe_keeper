@@ -34,7 +34,15 @@ const HomeScreen = () => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#f7f2ec" }}>
-      <SearchBar recipes={recipes} />
+      <SearchBar
+        recipes={recipes}
+        filterOptions={[
+          { label: "Newest", value: "date_descending" },
+          { label: "Oldest", value: "date_ascending" },
+          { label: "A-Z", value: "name_ascending" },
+          { label: "Z-A", value: "name_descending" },
+        ]}
+      />
     </SafeAreaView>
   );
 };
