@@ -237,6 +237,21 @@ app.get("/users/:id/recipes", async (req, res) => {
   }
 });
 
+//Get recipes in cart
+app.get("/users/:id/recipesInCart", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).populate("recipesInCart");
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+    res.json({
+      recipesInCart: user.recipesInCart || [],
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch recipes in cart." });
+  }
+});
+
 app.put("/users/:id/favorites", async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
