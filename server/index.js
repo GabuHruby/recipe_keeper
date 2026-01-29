@@ -214,6 +214,7 @@ app.get("/users/:id", async (req, res) => {
       profilePictureUri: user.profilePictureUri || "",
       recipesInCart: user.recipesInCart || [],
       recipesCreated: user.recipesCreated || [],
+      family: user.family || null,
     });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch user." });

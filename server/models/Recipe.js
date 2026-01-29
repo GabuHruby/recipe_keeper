@@ -17,6 +17,7 @@ const RecipeSchema = new mongoose.Schema(
     imageUri: { type: String, trim: true },
     author: { type: String, required: true, trim: true },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    family: { type: mongoose.Schema.Types.ObjectId, ref: "Family" },
   },
   { timestamps: true }
 );
