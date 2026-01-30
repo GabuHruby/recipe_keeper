@@ -10,23 +10,55 @@ import {
   ScrollView,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import Collapsible from "react-native-collapsible";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import API_BASE_URL from "../../config/api";
 
 const Profile = ({ setAuth }) => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [familyId, setFamilyId] = useState("");
   const [profilePictureUri, setProfilePictureUri] = useState("");
   const [recipesCount, setRecipesCount] = useState(0);
+  const [familyName, setFamilyName] = useState("");
+  const [familyInviteCode, setFamilyInviteCode] = useState("");
+  const [familyCreatorId, setFamilyCreatorId] = useState("");
+  const [familyCreatorName, setFamilyCreatorName] = useState("");
+  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [storedID, setStoredID] = useState(null);
 
   const loadUserData = useCallback(async () => {
     try {
-      const [storedId, storedUsername, storedEmail] = await Promise.all([
-        AsyncStorage.getItem("userId"),
-        AsyncStorage.getItem("username"),
-        AsyncStorage.getItem("email"),
-      ]);
+      const [storedId, storedUsername, storedEmail, storedFamilyId] =
+        await Promise.all([
+          AsyncStorage.getItem("userId"),
+          AsyncStorage.getItem("username"),
+          AsyncStorage.getItem("email"),
+          AsyncStorage.getItem("family"),
+        ]);
+      setFamilyId(storedFamilyId || "");
+      setStoredID(storedId || null);
+      //Get family data
+      if (storedFamilyId) {
+        const family = await fetch(`${API_BASE_URL}/family/${storedFamilyId}`);
+        if (family.ok) {
+          const familyData = await family.json();
+          setFamilyName(familyData.name || "");
+          setFamilyInviteCode(familyData.inviteCode || "");
+          setFamilyCreatorId(familyData.createdBy || "");
 
+          //Get creator's username
+          const creator = await fetch(
+            `${API_BASE_URL}/users/${familyData.createdBy}`
+          );
+          if (creator.ok) {
+            const creatorData = await creator.json();
+            setFamilyCreatorName(creatorData.username || "");
+          }
+        }
+      }
+
+      //Get user data
       if (storedId) {
         const response = await fetch(`${API_BASE_URL}/users/${storedId}`);
         if (response.ok) {
@@ -80,13 +112,49 @@ const Profile = ({ setAuth }) => {
     }
   };
 
+  const resetFamilyState = async () => {
+    setFamilyId("");
+    setFamilyName("");
+    setFamilyInviteCode("");
+    setFamilyCreatorId("");
+    setFamilyCreatorName("");
+    await AsyncStorage.removeItem("family");
+  };
+
+  const handleLeaveFamily = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/users/leaveFamily/${familyId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId: storedID }),
+      });
+
+      await resetFamilyState();
+    } catch (error) {
+      console.error("Failed to leave family:", error);
+    }
+  };
+
+  const handleDeleteFamily = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/family/${familyId}`, {
+        method: "DELETE",
+      });
+      await resetFamilyState();
+    } catch (error) {
+      console.error("Failed to delete family:", error);
+    }
+  };
+
   const handleDeleteAccount = () => {
     Alert.alert("Delete account doesn't work yet");
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.profileHeader}>
           <TouchableOpacity onPress={handleChangeImage}>
             <Image
@@ -110,12 +178,57 @@ const Profile = ({ setAuth }) => {
         </View>
 
         <View style={styles.actions}>
+          {/*Password Section*/}
           <TouchableOpacity
             style={styles.actionButton}
             onPress={handleChangePassword}
           >
             <Text style={styles.actionText}>Change password</Text>
           </TouchableOpacity>
+
+          {/*Family Section*/}
+          <View style={styles.familySection(isCollapsed)}>
+            <TouchableOpacity
+              style={styles.familyButton(isCollapsed)}
+              onPress={() => setIsCollapsed(!isCollapsed)}
+            >
+              <Text style={styles.actionText}>View Family Details</Text>
+            </TouchableOpacity>
+            <Collapsible
+              style={styles.familyDetailsView}
+              collapsed={isCollapsed}
+            >
+              <Text style={styles.familyLabel}>Family Name:</Text>
+              <Text style={styles.familyInfo}>
+                {familyName || "No family joined"}
+              </Text>
+              <Text style={styles.familyLabel}>Invite Code:</Text>
+              <Text style={styles.familyInfo}>{familyInviteCode || "N/A"}</Text>
+              <Text style={styles.familyLabel}>Owner:</Text>
+              <Text style={styles.familyInfo}>
+                {familyCreatorName || "N/A"}
+              </Text>
+
+              {familyId ? (
+                <TouchableOpacity
+                  style={styles.leaveFamilyButton}
+                  onPress={handleLeaveFamily}
+                >
+                  <Text style={styles.actionText}>Leave Family</Text>
+                </TouchableOpacity>
+              ) : null}
+              {storedID === familyCreatorId ? (
+                <TouchableOpacity
+                  style={styles.deleteFamilyButton}
+                  onPress={handleDeleteFamily}
+                >
+                  <Text style={styles.actionText}>Delete Family</Text>
+                </TouchableOpacity>
+              ) : null}
+            </Collapsible>
+          </View>
+
+          {/*User Section*/}
           <TouchableOpacity
             style={[styles.actionButton, styles.signOutButton]}
             onPress={handleSignOut}
@@ -145,6 +258,7 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: 20,
+    paddingBottom: 132,
   },
   profileHeader: {
     alignItems: "center",
@@ -189,6 +303,54 @@ const styles = StyleSheet.create({
   },
   actions: {
     gap: 12,
+  },
+  familySection: (isCollapsed) => ({
+    backgroundColor: isCollapsed ? "transparent" : "#ffffff",
+    borderRadius: 12,
+    borderWidth: isCollapsed ? 0 : 1,
+    borderColor: "#e9dccf",
+  }),
+  familyButton: (isCollapsed) => ({
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: isCollapsed ? 1 : 0,
+    borderColor: "#e9dccf",
+  }),
+  familyDetailsView: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#e9dccf",
+  },
+  familyLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#3a3a3a",
+    marginBottom: 4,
+  },
+  familyInfo: {
+    fontSize: 15,
+    color: "#2b2b2b",
+    marginBottom: 12,
+  },
+  leaveFamilyButton: {
+    backgroundColor: "#fff2ee",
+    borderColor: "#f2c6b8",
+    alignSelf: "flex-start",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  deleteFamilyButton: {
+    backgroundColor: "#ffecec",
+    borderColor: "#f5bcbc",
+    alignSelf: "flex-start",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginTop: 10,
   },
   actionButton: {
     backgroundColor: "#ffffff",

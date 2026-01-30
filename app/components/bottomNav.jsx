@@ -9,6 +9,8 @@ import ProfileScreen from "../tabs/profile";
 import AddRecipeScreen from "../tabs/addRecipe";
 import RecipeDetailScreen from "./recipe/recipeDetail";
 import EditRecipeScreen from "./recipe/editRecipe";
+import JoinFamilyScreen from "./family/joinFamily";
+import CreateFamilyScreen from "./family/createFamily";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -28,6 +30,16 @@ const HomeStackScreen = () => (
     <Stack.Screen
       name="EditRecipe"
       component={EditRecipeScreen}
+      options={{ headerShown: false }}
+    />
+    <Stack.Screen
+      name="JoinFamily"
+      component={JoinFamilyScreen}
+      options={{ headerShown: false }}
+    />
+    <Stack.Screen
+      name="CreateFamily"
+      component={CreateFamilyScreen}
       options={{ headerShown: false }}
     />
   </Stack.Navigator>

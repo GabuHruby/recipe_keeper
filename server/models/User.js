@@ -9,6 +9,7 @@ const UserSchema = new mongoose.Schema(
     recipesInCart: { type: [mongoose.Schema.Types.ObjectId], ref: "Recipe", default: [] },
     profilePictureUri: { type: String, trim: true },
     recipesCreated: { type: [mongoose.Schema.Types.ObjectId], ref: "Recipe", default: [] },
+    family: { type: mongoose.Schema.Types.ObjectId, ref: "Family", default: null },
   },
   { timestamps: true }
 );

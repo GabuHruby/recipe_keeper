@@ -13,6 +13,7 @@ const { v2: cloudinary } = require("cloudinary");
 const bcrypt = require("bcryptjs");
 const Recipe = require("./models/Recipe");
 const User = require("./models/User");
+const Family = require("./models/Family");
 
 const app = express();
 
@@ -143,6 +144,28 @@ app.delete("/recipes/:id", async (req, res) => {
   }
 });
 
+//Get family recipes
+app.get("/recipes/family/:familyId", async (req, res) => {
+  try {
+    //Get all users in the family
+    const family = await Family.findById(req.params.familyId);
+    if (!family) {
+      return res.status(404).json({ error: "Family not found." });
+    }
+    const members = family.members || [];
+    
+    //Get all recipes created by family members
+    //Finding recipes and seeing if the createdBy ID is in the members array and sorting by most recent
+    const recipes = await Recipe.find({ createdBy: { $in: members } }).sort({
+      createdAt: -1,
+    });
+    res.json(recipes);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch family recipes." });
+  }
+});
+
+
 app.post("/users/signup", async (req, res) => {
   try {
     const username = (req.body.username || "").trim();
@@ -192,10 +215,126 @@ app.post("/users/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials." });
     }
 
-    console.log("User logged in:", user._id);
     res.json({ id: user._id, username: user.username, email: user.email });
   } catch (err) {
     res.status(500).json({ error: "Failed to log in." });
+  }
+});
+
+const generateFamilyCode = () => {
+  const possibleChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let code = "";
+    for (let i = 0; i < 6; i++) {
+      const idx = Math.floor(Math.random() * possibleChars.length);
+      code += possibleChars.charAt(idx);
+    }
+
+    return code;
+};
+
+app.post("/family", async (req, res) => {
+  try {
+    const familyName = (req.body.name || "").trim();
+    const userId = req.body.userId;
+
+    if (!familyName || !userId ) {
+      return res.status(400).json({ error: "Missing required fields." });
+    }
+    //Generate code
+    let inviteCode = generateFamilyCode();
+    while (await Family.findOne({ inviteCode })) {
+      inviteCode = generateFamilyCode();
+    }
+
+    const family = await Family.create({ name: familyName, inviteCode: inviteCode, members: [userId], createdBy: userId });
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    user.family = family._id; 
+    await user.save();
+
+    res.status(201).json({ id: family._id, inviteCode: family.inviteCode });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create family." });
+  }
+});
+
+app.delete("/family/:familyId", async (req, res) => {
+  try {
+    const familyId = req.params.familyId;
+    
+    const family = await Family.findById(familyId);
+    if (!family) {
+      return res.status(404).json({ error: "Family not found." });
+    }
+    
+    //Remove family reference from all members
+    await User.updateMany(
+      { family: familyId },
+      { $set: { family: null } }
+    );
+
+    //Delete the family
+    await Family.deleteOne({ _id: familyId });
+    res.json({ message: "Family deleted successfully." });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete family." });
+  }
+});
+
+app.get("/family/:familyId", async (req, res) => {
+  try {
+    const family = await Family.findById(req.params.familyId);
+    if (!family) {
+      return res.status(404).json({ error: "Family not found." });
+    }
+    res.json({
+      id: family._id,
+      name: family.name,
+      inviteCode: family.inviteCode,
+      members: family.members || [],
+      createdBy: family.createdBy,
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch family." });
+  }
+});
+
+app.put("/users/leaveFamily/:familyId", async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const familyId = req.params.familyId;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    const family = await Family.findById(familyId);
+    if (!family) {
+      return res.status(404).json({ error: "Family not found." });
+    }
+
+    //Remove user from family members
+    family.members = family.members.filter(
+      (memberId) => memberId.toString() !== userId
+    );
+    if (family.members.length === 0) {
+      //Delete family if no members left
+      await Family.deleteOne({ _id: family._id });
+    }else{
+      family.createdBy = family.members[0];
+      await family.save();
+    }
+    
+    //Remove family from user
+    user.family = null;
+    await user.save();
+    res.json({ message: "Left family successfully." });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to leave family." });
   }
 });
 
@@ -220,6 +359,7 @@ app.get("/users/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch user." });
   }
 });
+
 
 //Get recipes from a specific user for the personal screen
 app.get("/users/:id/recipes", async (req, res) => {
