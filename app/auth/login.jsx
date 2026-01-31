@@ -45,7 +45,9 @@ const LogInScreen = ({ auth, setAuth }) => {
         ["userId", data.id || ""],
         ["username", data.username || ""],
         ["email", data.email || ""],
+        ["family", data.family || ""],
       ]);
+      console.log(data.family);
       setAuth("loggedIn");
     } catch (err) {
       setError(err.message || "Please try again.");

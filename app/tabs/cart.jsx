@@ -59,6 +59,8 @@ const Cart = () => {
       setRecipesInCart((prev) =>
         prev.filter((recipe) => recipe._id !== recipeId)
       );
+      //reset checked items
+      setCheckedItems({});
     } catch (err) {
       //nothing
     }

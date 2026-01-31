@@ -10,6 +10,7 @@ import {
   ScrollView,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import Entypo from "@expo/vector-icons/Entypo";
 import Collapsible from "react-native-collapsible";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import API_BASE_URL from "../../config/api";
@@ -104,12 +105,14 @@ const Profile = ({ setAuth }) => {
         "userId",
         "username",
         "email",
+        "family",
       ]);
     } finally {
       if (setAuth) {
         setAuth("login");
       }
     }
+    resetFamilyState();
   };
 
   const resetFamilyState = async () => {
@@ -148,8 +151,30 @@ const Profile = ({ setAuth }) => {
     }
   };
 
-  const handleDeleteAccount = () => {
-    Alert.alert("Delete account doesn't work yet");
+  const handleDeleteAccount = async () => {
+    try {
+      await AsyncStorage.multiRemove([
+        "isLoggedIn",
+        "userId",
+        "username",
+        "email",
+        "family",
+      ]);
+      await fetch(`${API_BASE_URL}/users/${storedID}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ familyId: familyId }),
+      });
+    } catch (err) {
+      console.error("Failed to delete account:", err);
+    } finally {
+      if (setAuth) {
+        setAuth("signup");
+      }
+    }
+    resetFamilyState();
   };
 
   return (
@@ -192,7 +217,19 @@ const Profile = ({ setAuth }) => {
               style={styles.familyButton(isCollapsed)}
               onPress={() => setIsCollapsed(!isCollapsed)}
             >
-              <Text style={styles.actionText}>View Family Details</Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Text style={styles.actionText}>View Family Details</Text>
+                <Entypo
+                  name={isCollapsed ? "chevron-down" : "chevron-up"}
+                  size={20}
+                  color="black"
+                />
+              </View>
             </TouchableOpacity>
             <Collapsible
               style={styles.familyDetailsView}

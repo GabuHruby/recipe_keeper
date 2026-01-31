@@ -43,6 +43,7 @@ const SignupScreen = ({ auth, setAuth }) => {
         ["userId", data.id || ""],
         ["username", data.username || ""],
         ["email", data.email || ""],
+        ["family", data.family || ""],
       ]);
       setAuth("loggedIn");
     } catch (err) {

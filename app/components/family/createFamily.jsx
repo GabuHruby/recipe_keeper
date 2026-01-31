@@ -11,7 +11,7 @@ import { useNavigation } from "@react-navigation/native";
 import API_BASE_URL from "../../../config/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const CreateFamily = (storedID) => {
+const CreateFamily = () => {
   const navigation = useNavigation();
   const [name, setName] = useState("");
   const [error, setError] = useState("");

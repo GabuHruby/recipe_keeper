@@ -20,7 +20,6 @@ const HomeScreen = () => {
     try {
       const storedID = await AsyncStorage.getItem("userId");
       setStoredID(storedID);
-
       const response = await fetch(`${API_BASE_URL}/users/${storedID}`);
       if (!response.ok) {
         throw new Error("Failed to fetch user data.");
@@ -28,6 +27,7 @@ const HomeScreen = () => {
 
       const data = await response.json();
       setFamilyId(data.family || null);
+      await AsyncStorage.setItem("family", data.family || "");
     } catch (err) {
       console.log("Failed to fetch user data:", err);
       setFamilyId(null);
@@ -37,6 +37,10 @@ const HomeScreen = () => {
   //Usecallback makes it so that the function is not recreated on every render
   const loadRecipes = useCallback(async () => {
     const famId = await AsyncStorage.getItem("family");
+    if (!famId) {
+      setRecipes([]);
+      return;
+    }
     try {
       const response = await fetch(`${API_BASE_URL}/recipes/family/${famId}`);
       if (!response.ok) {

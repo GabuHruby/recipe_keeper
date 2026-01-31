@@ -165,6 +165,53 @@ app.get("/recipes/family/:familyId", async (req, res) => {
   }
 });
 
+app.delete("/users/:id", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    //Delete family association
+    const familyId = req.body.familyId;
+    const family = await Family.findById(familyId);
+    if (family) {
+      //Remove user from family members
+      family.members = family.members.filter(
+        (memberId) => memberId.toString() !== req.params.id
+      );
+
+      if (family.members.length === 0) {
+        //Delete family if no members left
+        await Family.deleteOne({ _id: family._id });
+      }else{
+        family.createdBy = family.members[0];
+        await family.save();
+      }
+    }
+
+    //Delete all recipes created by the user
+    const recipesCreated = user.recipesCreated || [];
+    for (const recipeId of recipesCreated) {
+      const recipe = await Recipe.findById(recipeId);
+      if (recipe) {
+        if (recipe.imageUri) {
+          const publicId = getCloudinaryPublicId(recipe.imageUri);
+          if (publicId) {
+            await cloudinary.uploader.destroy(publicId);
+          }
+        }
+        await Recipe.deleteOne({ _id: recipe._id });
+      }
+    }
+
+    //Delete user
+    await User.deleteOne({ _id: user._id });
+    res.json({ message: "User and recipes deleted." });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete user." });
+  }
+});
 
 app.post("/users/signup", async (req, res) => {
   try {
@@ -215,7 +262,7 @@ app.post("/users/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials." });
     }
 
-    res.json({ id: user._id, username: user.username, email: user.email });
+    res.json({ id: user._id, username: user.username, email: user.email, family: user.family || null });
   } catch (err) {
     res.status(500).json({ error: "Failed to log in." });
   }
@@ -258,6 +305,39 @@ app.post("/family", async (req, res) => {
     res.status(201).json({ id: family._id, inviteCode: family.inviteCode });
   } catch (err) {
     res.status(500).json({ error: "Failed to create family." });
+  }
+});
+
+app.put("/family/join", async (req, res) => {
+  try {
+    const inviteCode = (req.body.inviteCode || "").trim();
+    const userId = req.body.userId;
+
+    if (!inviteCode || !userId ) {
+      return res.status(400).json({ error: "Missing required fields." });
+    }
+
+    const family = await Family.findOne({ inviteCode });
+    if (!family) {
+      return res.status(404).json({ error: "Invalid code." });
+    }
+
+    //Add user to family members
+    family.members.push(userId);
+    await family.save();
+
+    //Add family to user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    user.family = family._id; 
+    await user.save();
+
+    res.json({ id: family._id, name: family.name });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to join family." });
   }
 });
 
