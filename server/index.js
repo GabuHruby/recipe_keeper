@@ -20,6 +20,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+//https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status
+//Website that shows all status codes
+
 //Means file will be stored in RAM temporarily
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -48,11 +51,13 @@ app.get("/", (req, res) => {
 });
 
 //Async allows to use await inside the function
+//Gets all recipes but is currently not being used after the family implimentation
 app.get("/recipes", async (req, res) => {
   try {
     const recipes = await Recipe.find().sort({ createdAt: -1 });
     res.json(recipes);
   } catch (err) {
+    //500 is internal server error, which means something went wrong in te server
     res.status(500).json({ error: "Failed to fetch recipes." });
   }
 });
@@ -66,8 +71,10 @@ app.post("/recipes", async (req, res) => {
       createdByUser.recipesCreated.push(recipe._id);
       await createdByUser.save();
     }
+    //201 means created (usual post and put requests)
     res.status(201).json(recipe);
   } catch (err) {
+    //400 means bad request (invalid data sent)
     res.status(400).json({ error: "Invalid recipe data." });
   }
 });
@@ -77,10 +84,12 @@ app.get("/recipes/:id", async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);
     if (!recipe) {
+      //404 means not found
       return res.status(404).json({ error: "Recipe not found." });
     }
     res.json(recipe);
   } catch (err) {
+    //internal server error, most catch (err) are 500 errors
     res.status(500).json({ error: "Failed to fetch recipe." });
   }
 });
@@ -90,6 +99,7 @@ app.put("/recipes/:id", async (req, res) => {
   try {
     const existing = await Recipe.findById(req.params.id);
     if (!existing) {
+      //404 means not found
       return res.status(404).json({ error: "Recipe not found." });
     }
 
@@ -112,6 +122,7 @@ app.put("/recipes/:id", async (req, res) => {
     });
     res.json(recipe);
   } catch (err) {
+    //400 means bad request
     res.status(400).json({ error: "Failed to update recipe." });
   }
 });
@@ -121,6 +132,7 @@ app.delete("/recipes/:id", async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);
     if (!recipe) {
+      //404 not found
       return res.status(404).json({ error: "Recipe not found." });
     }
     if (recipe.imageUri) {
@@ -140,6 +152,7 @@ app.delete("/recipes/:id", async (req, res) => {
     }
     res.json({ message: "Recipe deleted successfully." });
   } catch (err) {
+    //500 internal server error
     res.status(500).json({ error: "Failed to delete recipe." });
   }
 });
@@ -150,13 +163,14 @@ app.get("/recipes/family/:familyId", async (req, res) => {
     //Get all users in the family
     const family = await Family.findById(req.params.familyId);
     if (!family) {
+      //404 not found
       return res.status(404).json({ error: "Family not found." });
     }
     const members = family.members || [];
     
     //Get all recipes created by family members
     //Finding recipes and seeing if the createdBy ID is in the members array and sorting by most recent
-    const recipes = await Recipe.find({ createdBy: { $in: members } }).sort({
+    const recipes = await Recipe.find({ createdBy: { $in: members }, private: false }).sort({
       createdAt: -1,
     });
     res.json(recipes);
@@ -221,18 +235,22 @@ app.post("/users/signup", async (req, res) => {
 
     //Error prevention
     if (!username || !email || !password) {
+      //400 bad request
       return res.status(400).json({ error: "Missing required fields." });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await User.create({ username, email, passwordHash });
+    //201 created
     res.status(201).json({
       id: user._id,
       username: user.username,
       email: user.email,
     });
   } catch (err) {
+    //11000 is duplicate key error code in MongoDB
     if (err.code === 11000) {
+      //409 means conflict
       return res.status(409).json({ error: "Email already in use." });
     }
     res.status(500).json({ error: "Failed to create user." });
@@ -246,6 +264,7 @@ app.post("/users/login", async (req, res) => {
 
     //Check for missing fields
     if (!email || !password) {
+      //409 conflict
       return res.status(400).json({ error: "Missing required fields." });
     }
 
@@ -253,12 +272,14 @@ app.post("/users/login", async (req, res) => {
     const user = await User.findOne({ email });
     //If there is not then return invalid
     if (!user) {
+      //401 means unauthorized
       return res.status(401).json({ error: "Invalid credentials." });
     }
 
     //Check if passwords are the same after ensuring there is a user with that email
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
+      //401 means unauthorized
       return res.status(401).json({ error: "Invalid credentials." });
     }
 

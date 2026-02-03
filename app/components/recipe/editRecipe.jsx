@@ -7,7 +7,9 @@ import {
   TouchableOpacity,
   Alert,
   TextInput,
+  Pressable,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
@@ -32,6 +34,7 @@ const EditRecipe = ({ route }) => {
     );
   }
 
+  const [checked, setChecked] = useState(recipe?.private || false);
   const [name, setName] = useState(recipe.name);
   const [timeMinutes, setTimeMinutes] = useState(recipe.timeMinutes || "");
   //add unique ids to ingredients if they don't have them
@@ -196,6 +199,7 @@ const EditRecipe = ({ route }) => {
       imageUri: uploadedImageUrl,
       author: (await AsyncStorage.getItem("username")) || "",
       createdBy: (await AsyncStorage.getItem("userId")) || "",
+      private: checked,
     };
     //Send recipe to server
     try {
@@ -403,6 +407,39 @@ const EditRecipe = ({ route }) => {
             }}
             multiline
           />
+        </View>
+
+        <View style={styles.divider} />
+
+        {/*PUBLIC/PRIVATE SECTION (used pressable to not have the opacity change on click*/}
+        <View style={styles.section}>
+          <Text style={styles.label}>Privacy</Text>
+          <View style={{ flexDirection: "row" }}>
+            <Pressable
+              onPress={() => {
+                setChecked(!checked);
+                if (!altered) setAltered(true);
+              }}
+            >
+              <Ionicons
+                name={checked ? "radio-button-on" : "radio-button-off"}
+                size={24}
+                color={checked ? "#f27059" : "#8b6f5f"}
+              />
+            </Pressable>
+            <Text
+              style={{
+                paddingTop: 3,
+                marginLeft: 8,
+                fontSize: 15,
+                color: "#3a3a3a",
+              }}
+            >
+              {checked
+                ? "Private (only you can see this recipe)"
+                : "Public (family can see this recipe)"}
+            </Text>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
