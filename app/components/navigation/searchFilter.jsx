@@ -1,6 +1,5 @@
 import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import React from "react";
 
 export const getFilteredRecipes = (
   data,
@@ -18,34 +17,12 @@ export const getFilteredRecipes = (
 
   let filtered = searched;
 
-  /*
-    if (filter === "favorites") {
-      filtered = searched.filter((item) => favoriteIds.includes(item._id));
-    } else if (filter === "created") {
-      filtered = searched.filter((item) => item.createdBy === userId);
-    }
-
-    //Easy sorting
-    const sorters = {
-      date_descending: (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-      date_ascending: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
-      name_ascending: (a, b) => a.name.localeCompare(b.name),
-      name_descending: (a, b) => b.name.localeCompare(a.name),
-    };
-    
-    //Sets sorter to one of the functions above
-    const sorter = sorters[filter];
-    if (sorter) {
-      filtered = [...filtered].sort(sorter);
-    }*/
-
-  //Manual Sorting
   const manualSorters = {
     favorites: (filtered) => {
-      return searched.filter((item) => favoriteIds.includes(item._id));
+      return filtered.filter((item) => favoriteIds.includes(item._id));
     },
     created: (filtered) => {
-      return searched.filter((item) => item.createdBy === userId);
+      return filtered.filter((item) => item.createdBy === userId);
     },
     date_descending: (filtered) => {
       var sorted = [...filtered];

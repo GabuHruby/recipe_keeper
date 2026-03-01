@@ -23,27 +23,6 @@ const SearchBar = ({
     }
     //Gets labels from filter options
     const labels = filterOptions.map((option) => option.label);
-    //Check if user is on IOS or Android
-    /*if (Platform.OS === "ios") {
-      //https://reactnative.dev/docs/actionsheetios
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: [...labels, "Reset", "Cancel"],
-          cancelButtonIndex: labels.length + 1,
-          destructiveButtonIndex: labels.length,
-        },
-        (buttonIndex) => {
-          if (buttonIndex >= 0 && buttonIndex < labels.length) {
-            setFilter(filterOptions[buttonIndex].value);
-          } else if (buttonIndex === labels.length) {
-            setFilter("date_descending");
-          }
-          //Cancel button does nothing it just leaves
-        }
-      );
-      return;
-    }*/ //Tried using IOS but the cancel button was not wroking properly so I am going to leave it just in case but use android system as the default
-    //Android Alert as a fallback
     Alert.alert(
       "Sort & filter",
       "Choose an option",
@@ -60,7 +39,7 @@ const SearchBar = ({
         },
         { text: "Cancel", style: "cancel" },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   };
   return (
