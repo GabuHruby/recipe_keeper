@@ -1,10 +1,22 @@
-import { useCallback, useState } from "react";
-import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  RefreshControl,
+  FlatList,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SearchBar from "../components/navigation/searchBar";
+import SearchFilter, {
+  getFilteredRecipes,
+} from "../components/navigation/searchFilter";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import API_BASE_URL from "../../config/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Search } from "react-native-feather";
 
 //Plan for future: Make the home screen only for the family.
 // If you have not joined a family yet, it will appear a box saying JOIN FAMILY.
@@ -14,6 +26,9 @@ const HomeScreen = () => {
   const [recipes, setRecipes] = useState([]);
   const [storedID, setStoredID] = useState(null);
   const [familyId, setFamilyId] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("date_descending");
   const Navigation = useNavigation();
 
   const loadUserData = useCallback(async () => {
@@ -62,45 +77,77 @@ const HomeScreen = () => {
     }, [])
   );
 
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadRecipes();
+    await loadUserData();
+    setRefreshing(false);
+  }, [loadRecipes, loadUserData]);
+
+  //Gets filtered recipes from search filter and saves until recipe, search or filter changes
+  const filteredRecipes = useMemo(() => {
+    return getFilteredRecipes(recipes, search, filter);
+  }, [recipes, search, filter]);
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#f7f2ec" }}>
       {familyId ? (
-        <SearchBar
-          recipes={recipes}
-          filterOptions={[
-            { label: "Newest", value: "date_descending" },
-            { label: "Oldest", value: "date_ascending" },
-            { label: "A-Z", value: "name_ascending" },
-            { label: "Z-A", value: "name_descending" },
-          ]}
-        />
+        <>
+          <SearchBar
+            search={search}
+            setSearch={setSearch}
+            filter={filter}
+            setFilter={setFilter}
+            filterOptions={[
+              { label: "Newest", value: "date_descending" },
+              { label: "Oldest", value: "date_ascending" },
+              { label: "A-Z", value: "name_ascending" },
+              { label: "Z-A", value: "name_descending" },
+            ]}
+          />
+          <FlatList
+            contentContainerStyle={styles.listContent}
+            data={filteredRecipes}
+            renderItem={({ item }) => <SearchFilter item={item} />}
+            keyExtractor={(item) => item._id.toString()}
+            numColumns={2}
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+          />
+        </>
       ) : (
-        <View style={styles.noFamilyContainer}>
-          <View style={styles.section}>
-            <Text style={{ fontSize: 16, textAlign: "center" }}>
-              You have not joined a family yet. Please join a family to see
-              recipes from your family members.
-            </Text>
+        <ScrollView
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
+        >
+          <View style={styles.noFamilyContainer}>
+            <View style={styles.section}>
+              <Text style={{ fontSize: 16, textAlign: "center" }}>
+                You have not joined a family yet. Please join a family to see
+                recipes from your family members.
+              </Text>
+            </View>
+            <View style={styles.section}>
+              <TouchableOpacity
+                style={styles.button1}
+                onPress={() => {
+                  Navigation.navigate("JoinFamily");
+                }}
+              >
+                <Text style={styles.buttonText}>Join Family</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.button2}
+                onPress={() => {
+                  Navigation.navigate("CreateFamily");
+                }}
+              >
+                <Text style={styles.buttonText}>Create Family</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          <View style={styles.section}>
-            <TouchableOpacity
-              style={styles.button1}
-              onPress={() => {
-                Navigation.navigate("JoinFamily");
-              }}
-            >
-              <Text style={styles.buttonText}>Join Family</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.button2}
-              onPress={() => {
-                Navigation.navigate("CreateFamily");
-              }}
-            >
-              <Text style={styles.buttonText}>Create Family</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        </ScrollView>
       )}
     </SafeAreaView>
   );
@@ -143,5 +190,9 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  listContent: {
+    paddingHorizontal: 10,
+    paddingBottom: 20,
   },
 });

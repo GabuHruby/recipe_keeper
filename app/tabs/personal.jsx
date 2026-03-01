@@ -1,6 +1,10 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SearchBar from "../components/navigation/searchBar";
+import SearchFilter, {
+  getFilteredRecipes,
+} from "../components/navigation/searchFilter";
 import { useFocusEffect } from "@react-navigation/native";
 import API_BASE_URL from "../../config/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -9,6 +13,9 @@ const Personal = () => {
   const [recipes, setRecipes] = useState([]);
   const [favoriteIds, setFavoriteIds] = useState([]);
   const [storedID, setStoredID] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("date_descending");
 
   //Usecallback makes it so that the function is not recreated on every render
   const loadRecipes = useCallback(async () => {
@@ -39,10 +46,23 @@ const Personal = () => {
     }, [loadRecipes])
   );
 
+  const filteredRecipes = useMemo(() => {
+    return getFilteredRecipes(recipes, search, filter, favoriteIds, storedID);
+  }, [recipes, search, filter, favoriteIds, storedID]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadRecipes();
+    setRefreshing(false);
+  }, [loadRecipes]);
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#f7f2ec" }}>
       <SearchBar
-        recipes={recipes}
+        search={search}
+        setSearch={setSearch}
+        filter={filter}
+        setFilter={setFilter}
         filterOptions={[
           { label: "Newest", value: "date_descending" },
           { label: "Oldest", value: "date_ascending" },
@@ -51,8 +71,15 @@ const Personal = () => {
           { label: "Favorites", value: "favorites" },
           { label: "Created by you", value: "created" },
         ]}
-        favoriteIds={favoriteIds}
-        userId={storedID}
+      />
+      <FlatList
+        contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: 20 }}
+        data={filteredRecipes}
+        renderItem={({ item }) => <SearchFilter item={item} />}
+        keyExtractor={(item) => item._id.toString()}
+        numColumns={2}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
       />
     </SafeAreaView>
   );

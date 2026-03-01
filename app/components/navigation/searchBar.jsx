@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Pressable,
   StyleSheet,
@@ -9,12 +8,14 @@ import {
   ActionSheetIOS,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import SearchFilter from "../navigation/searchFilter";
 
-const SearchBar = ({ recipes, filterOptions = [], favoriteIds, userId }) => {
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState(filterOptions[0]?.value || "none");
-
+const SearchBar = ({
+  search,
+  setSearch,
+  filter,
+  setFilter,
+  filterOptions = [],
+}) => {
   const handlePress = () => {
     //Leaves if there is no filter options
     if (!filterOptions.length) {
@@ -94,14 +95,6 @@ const SearchBar = ({ recipes, filterOptions = [], favoriteIds, userId }) => {
           />
         </Pressable>
       </View>
-      <SearchFilter
-        data={recipes}
-        search={search}
-        setSearch={setSearch}
-        filter={filter}
-        favoriteIds={favoriteIds}
-        userId={userId}
-      />
     </View>
   );
 };

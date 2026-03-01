@@ -7,6 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  KeyboardAvoidingView, //https://www.youtube.com/watch?v=Y51mDfAhd4E
 } from "react-native";
 import API_BASE_URL from "../../config/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";

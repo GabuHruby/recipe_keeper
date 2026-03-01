@@ -279,7 +279,7 @@ app.post("/users/login", async (req, res) => {
     //Check if passwords are the same after ensuring there is a user with that email
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      //401 means unauthorized
+      //401 - Unauthorized
       return res.status(401).json({ error: "Invalid credentials." });
     }
 
@@ -551,21 +551,24 @@ app.post("/uploads", upload.single("file"), async (req, res) => {
     return res.status(400).json({ error: "No file uploaded." });
   }
   try {
-    const result = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        { folder: "recipes" },
-        (error, uploadResult) => {
+    //Create a promise to handle the async upload stream
+    const image = await new Promise((resolve, reject) => {
+      //Stream minizes memory usage as file is uploaded in chunks instead of all at once
+      cloudinary.uploader.upload_stream(
+        { folder: "recipes" }, //Folder path
+        (error, result) => {
           if (error) {
-            reject(error);
+            reject(error); //Reject promise if upload encounters an error
             return;
           }
-          resolve(uploadResult);
+          resolve(result);//Resolve promise with successful upload result
         }
-      );
-      stream.end(req.file.buffer);
+      ).end(req.file.buffer); //End stream and send file data from multer buffer to Cloudinary
     });
-    res.status(201).json({ url: result.secure_url });
+    // Return the secure URL (HTTPS) of the uploaded image
+    res.status(201).json({ url: image.secure_url });
   } catch (err) {
+    // Handle upload errors with 500 status
     res.status(500).json({ error: "Image upload failed." });
   }
 });
