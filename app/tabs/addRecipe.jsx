@@ -9,6 +9,8 @@ import {
   TouchableOpacity,
   View,
   Pressable,
+  KeyboardAvoidingView, //https://www.youtube.com/watch?v=Y51mDfAhd4E
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -80,7 +82,7 @@ const AddRecipe = () => {
   useFocusEffect(
     useCallback(() => {
       scrollRef.current?.scrollTo({ y: 0, animated: false });
-    }, [])
+    }, []),
   );
 
   //Choose a photo - more details: https://docs.expo.dev/versions/latest/sdk/imagepicker/
@@ -90,7 +92,7 @@ const AddRecipe = () => {
     if (status !== "granted") {
       Alert.alert(
         "Permission needed",
-        "Photo library access is required to choose an image."
+        "Photo library access is required to choose an image.",
       );
       return;
     }
@@ -144,7 +146,7 @@ const AddRecipe = () => {
   //Updates a specific field (name or amount) of an ingredient by id
   const updateIngredient = (id, field, value) => {
     setIngredients((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
+      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
     );
   };
 
@@ -209,181 +211,193 @@ const AddRecipe = () => {
   return (
     // SafeAreaView adds natural padding to avoid things like the ios notch
     <SafeAreaView style={styles.safeArea}>
-      {/* Loads everything at once unlike the FlatList used for recipes */}
-      <ScrollView ref={scrollRef} contentContainerStyle={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Add Recipe</Text>
-          <TouchableOpacity
-            style={styles.resetButton}
-            onPress={resetForm}
-            accessibilityRole="button"
-            accessibilityLabel="Reset recipe"
-          >
-            <Text style={styles.resetButtonText}>Reset</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/*NAME SECTION*/}
-        <View style={styles.section}>
-          <Text style={styles.label}>Recipe Name *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. Chicken Pasta"
-            placeholderTextColor="#afafaf"
-            value={name}
-            onChangeText={setName}
-          />
-        </View>
-
-        {/*PHOTO SECTION*/}
-        <View style={styles.section}>
-          <Text style={styles.label}>Photo</Text>
-          <View style={styles.imageWrap}>
-            {/* The ? and : is an if and else since it can't be used in JSX */}
-            {imageUri ? (
-              <>
-                <Image
-                  source={{ uri: imageUri }}
-                  style={styles.imagePreview}
-                  resizeMode="cover"
-                />
-
-                {/*Small X button to remove the image*/}
-                <TouchableOpacity
-                  style={styles.removeImageButton}
-                  onPress={() => setImageUri(null)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Remove image"
-                >
-                  <Text style={styles.removeImageButtonText}>×</Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <View style={styles.imagePlaceholder}>
-                <Text style={styles.imagePlaceholderText}>
-                  No image selected
-                </Text>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.row}>
-            {/*BUTTONS TO PICK PHOTO OR FILE*/}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      >
+        {/* Loads everything at once unlike the FlatList used for recipes */}
+        <ScrollView
+          ref={scrollRef}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.container}
+        >
+          <View style={styles.header}>
+            <Text style={styles.title}>Add Recipe</Text>
             <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={handlePickPhoto}
+              style={styles.resetButton}
+              onPress={resetForm}
+              accessibilityRole="button"
+              accessibilityLabel="Reset recipe"
             >
-              <Text style={styles.secondaryButtonText}>Choose from Photos</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={handlePickFile}
-            >
-              <Text style={styles.secondaryButtonText}>Choose File</Text>
+              <Text style={styles.resetButtonText}>Reset</Text>
             </TouchableOpacity>
           </View>
-        </View>
 
-        {/*TIME SECTION*/}
-        <View style={styles.section}>
-          <Text style={styles.label}>Time (minutes)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. 25"
-            placeholderTextColor="#afafaf"
-            value={timeMinutes}
-            onChangeText={setTimeMinutes}
-            keyboardType="numeric"
-          />
-        </View>
+          {/*NAME SECTION*/}
+          <View style={styles.section}>
+            <Text style={styles.label}>Recipe Name *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. Chicken Pasta"
+              placeholderTextColor="#afafaf"
+              value={name}
+              onChangeText={setName}
+            />
+          </View>
 
-        {/*INGREDIENTS SECTION*/}
-        <View style={styles.section}>
-          <Text style={styles.label}>Ingredients *</Text>
-          {ingredients.map((item, index) => (
-            <View key={item.id} style={styles.ingredientRow}>
-              <TextInput
-                style={[styles.input, styles.ingredientName]}
-                placeholder={`Ingredient ${index + 1}`}
-                placeholderTextColor="#afafaf"
-                value={item.name}
-                onChangeText={(value) =>
-                  updateIngredient(item.id, "name", value)
-                }
-              />
-              <TextInput
-                style={[styles.input, styles.ingredientAmount]}
-                placeholder="Amount"
-                placeholderTextColor="#afafaf"
-                value={item.amount}
-                onChangeText={(value) =>
-                  updateIngredient(item.id, "amount", value)
-                }
-              />
-              {ingredients.length > 1 ? (
-                <TouchableOpacity
-                  style={styles.removeButton}
-                  onPress={() => handleRemoveIngredient(item.id)}
-                >
-                  <Text style={styles.removeButtonText}>Remove</Text>
-                </TouchableOpacity>
-              ) : null}
+          {/*PHOTO SECTION*/}
+          <View style={styles.section}>
+            <Text style={styles.label}>Photo</Text>
+            <View style={styles.imageWrap}>
+              {/* The ? and : is an if and else since it can't be used in JSX */}
+              {imageUri ? (
+                <>
+                  <Image
+                    source={{ uri: imageUri }}
+                    style={styles.imagePreview}
+                    resizeMode="cover"
+                  />
+
+                  {/*Small X button to remove the image*/}
+                  <TouchableOpacity
+                    style={styles.removeImageButton}
+                    onPress={() => setImageUri(null)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Remove image"
+                  >
+                    <Text style={styles.removeImageButtonText}>×</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <View style={styles.imagePlaceholder}>
+                  <Text style={styles.imagePlaceholderText}>
+                    No image selected
+                  </Text>
+                </View>
+              )}
             </View>
-          ))}
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={handleAddIngredient}
-          >
-            <Text style={styles.secondaryButtonText}>Add Ingredient</Text>
-          </TouchableOpacity>
-        </View>
 
-        {/*INSTRUCTIONS SECTION*/}
-        <View style={styles.section}>
-          <Text style={styles.label}>Step-by-step Instructions</Text>
-          <TextInput
-            style={[styles.input, styles.instructions]}
-            placeholder="e.g. 1) Boil water..."
-            placeholderTextColor="#afafaf"
-            value={instructions}
-            onChangeText={setInstructions}
-            multiline
-          />
-        </View>
-
-        {/*PUBLIC/PRIVATE SECTION (used pressable to not have the opacity change on click*/}
-        <View style={styles.section}>
-          <Text style={styles.label}>Privacy</Text>
-          <View style={{ flexDirection: "row" }}>
-            <Pressable onPress={() => setChecked(!checked)}>
-              <Ionicons
-                name={checked ? "radio-button-on" : "radio-button-off"}
-                size={24}
-                color={checked ? "#f27059" : "#8b6f5f"}
-              />
-            </Pressable>
-            <Text
-              style={{
-                paddingTop: 3,
-                marginLeft: 8,
-                fontSize: 15,
-                color: "#3a3a3a",
-              }}
-            >
-              {checked
-                ? "Private (only you can see this recipe)"
-                : "Public (family can see this recipe)"}
-            </Text>
+            <View style={styles.row}>
+              {/*BUTTONS TO PICK PHOTO OR FILE*/}
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={handlePickPhoto}
+              >
+                <Text style={styles.secondaryButtonText}>
+                  Choose from Photos
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={handlePickFile}
+              >
+                <Text style={styles.secondaryButtonText}>Choose File</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          {/*TIME SECTION*/}
+          <View style={styles.section}>
+            <Text style={styles.label}>Time (minutes)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. 25"
+              placeholderTextColor="#afafaf"
+              value={timeMinutes}
+              onChangeText={setTimeMinutes}
+              keyboardType="numeric"
+            />
+          </View>
 
-        {/*SUBMIT SECTION*/}
-        <TouchableOpacity style={styles.primaryButton} onPress={handleSubmit}>
-          <Text style={styles.primaryButtonText}>Add Recipe</Text>
-        </TouchableOpacity>
-      </ScrollView>
+          {/*INGREDIENTS SECTION*/}
+          <View style={styles.section}>
+            <Text style={styles.label}>Ingredients *</Text>
+            {ingredients.map((item, index) => (
+              <View key={item.id} style={styles.ingredientRow}>
+                <TextInput
+                  style={[styles.input, styles.ingredientName]}
+                  placeholder={`Ingredient ${index + 1}`}
+                  placeholderTextColor="#afafaf"
+                  value={item.name}
+                  onChangeText={(value) =>
+                    updateIngredient(item.id, "name", value)
+                  }
+                />
+                <TextInput
+                  style={[styles.input, styles.ingredientAmount]}
+                  placeholder="Amount"
+                  placeholderTextColor="#afafaf"
+                  value={item.amount}
+                  onChangeText={(value) =>
+                    updateIngredient(item.id, "amount", value)
+                  }
+                />
+                {ingredients.length > 1 ? (
+                  <TouchableOpacity
+                    style={styles.removeButton}
+                    onPress={() => handleRemoveIngredient(item.id)}
+                  >
+                    <Text style={styles.removeButtonText}>Remove</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            ))}
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={handleAddIngredient}
+            >
+              <Text style={styles.secondaryButtonText}>Add Ingredient</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/*INSTRUCTIONS SECTION*/}
+          <View style={styles.section}>
+            <Text style={styles.label}>Step-by-step Instructions</Text>
+            <TextInput
+              style={[styles.input, styles.instructions]}
+              placeholder="e.g. 1) Boil water..."
+              placeholderTextColor="#afafaf"
+              value={instructions}
+              onChangeText={setInstructions}
+              multiline
+            />
+          </View>
+
+          {/*PUBLIC/PRIVATE SECTION (used pressable to not have the opacity change on click*/}
+          <View style={styles.section}>
+            <Text style={styles.label}>Privacy</Text>
+            <View style={{ flexDirection: "row" }}>
+              <Pressable onPress={() => setChecked(!checked)}>
+                <Ionicons
+                  name={checked ? "radio-button-on" : "radio-button-off"}
+                  size={24}
+                  color={checked ? "#f27059" : "#8b6f5f"}
+                />
+              </Pressable>
+              <Text
+                style={{
+                  paddingTop: 3,
+                  marginLeft: 8,
+                  fontSize: 15,
+                  color: "#3a3a3a",
+                }}
+              >
+                {checked
+                  ? "Private (only you can see this recipe)"
+                  : "Public (family can see this recipe)"}
+              </Text>
+            </View>
+          </View>
+
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+          {/*SUBMIT SECTION*/}
+          <TouchableOpacity style={styles.primaryButton} onPress={handleSubmit}>
+            <Text style={styles.primaryButtonText}>Add Recipe</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };

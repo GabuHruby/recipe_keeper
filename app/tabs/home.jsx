@@ -74,7 +74,7 @@ const HomeScreen = () => {
     useCallback(() => {
       loadUserData();
       loadRecipes();
-    }, [])
+    }, []),
   );
 
   const handleRefresh = useCallback(async () => {
@@ -194,5 +194,6 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 10,
     paddingBottom: 20,
+    minHeight: "80%",
   },
 });

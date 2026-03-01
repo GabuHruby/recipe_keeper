@@ -43,7 +43,7 @@ const Personal = () => {
   useFocusEffect(
     useCallback(() => {
       loadRecipes();
-    }, [loadRecipes])
+    }, [loadRecipes]),
   );
 
   const filteredRecipes = useMemo(() => {
@@ -73,7 +73,11 @@ const Personal = () => {
         ]}
       />
       <FlatList
-        contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: 20 }}
+        contentContainerStyle={{
+          paddingHorizontal: 10,
+          paddingBottom: 20,
+          minHeight: "80%",
+        }}
         data={filteredRecipes}
         renderItem={({ item }) => <SearchFilter item={item} />}
         keyExtractor={(item) => item._id.toString()}
