@@ -227,6 +227,72 @@ app.delete("/users/:id", async (req, res) => {
   }
 });
 
+app.put("/users/changeUsername", async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const password = req.body.password || "";
+    const newUsername = req.body.newUsername || "";
+
+    if (!userId || !password || !newUsername) {
+      return res.status(400).json({ error: "Missing required fields." });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+    
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+
+    if (!isMatch) {
+      return res.status(401).json({ error: "Incorrect password." });
+    }
+
+    user.username = newUsername;
+    await user.save();
+
+    //change recipe author name for all recipes created by the user
+    await Recipe.updateMany(
+      { createdBy: userId },
+      { $set: { author: newUsername } }
+    );
+
+    res.json({ message: "Username changed successfully." });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to change username." });
+  }
+});
+
+app.put("/users/changePassword", async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const oldPassword = req.body.oldPassword || "";
+    const newPassword = req.body.newPassword || "";
+
+    if (!userId || !oldPassword || !newPassword) {
+      return res.status(400).json({ error: "Missing required fields." });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+    
+    const isMatch = await bcrypt.compare(oldPassword, user.passwordHash);
+
+    if (!isMatch) {
+      return res.status(401).json({ error: "Incorrect old password." });
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+    user.passwordHash = newHash;
+    await user.save();
+    res.json({ message: "Password changed successfully." });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to change password." });
+  }
+});
+
 app.post("/users/signup", async (req, res) => {
   try {
     const username = (req.body.username || "").trim();
@@ -273,14 +339,14 @@ app.post("/users/login", async (req, res) => {
     //If there is not then return invalid
     if (!user) {
       //401 means unauthorized
-      return res.status(401).json({ error: "Invalid credentials." });
+      return res.status(401).json({ error: "No account matching this email." });
     }
 
     //Check if passwords are the same after ensuring there is a user with that email
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
       //401 - Unauthorized
-      return res.status(401).json({ error: "Invalid credentials." });
+      return res.status(401).json({ error: "Incorrect password." });
     }
 
     res.json({ id: user._id, username: user.username, email: user.email, family: user.family || null });

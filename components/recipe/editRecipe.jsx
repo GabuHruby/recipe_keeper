@@ -14,15 +14,15 @@ import { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
-import { useNavigation } from "@react-navigation/native";
-import API_BASE_URL from "../../../config/api";
+import { router, useLocalSearchParams } from "expo-router";
+import API_BASE_URL from "../../config/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const EditRecipe = ({ route }) => {
-  const navigation = useNavigation();
+const EditRecipe = () => {
+  const params = useLocalSearchParams();
 
   //Safety check to ensure recipe data exists
-  const recipe = route?.params?.recipe;
+  const recipe = params.recipe ? JSON.parse(params.recipe) : null;
 
   if (!recipe) {
     return (
@@ -138,8 +138,8 @@ const EditRecipe = ({ route }) => {
       fetch(`${API_BASE_URL}/recipes/${recipe._id}`, {
         method: "DELETE",
       }).then(() => {
-        navigation.goBack();
-        navigation.goBack();
+        //Back past the detail page of the deleted recipe
+        router.dismiss(2);
         Alert.alert("Recipe deleted successfully.");
       });
     } catch (error) {
@@ -218,7 +218,7 @@ const EditRecipe = ({ route }) => {
 
       await response.json();
       Alert.alert("Recipe saved!");
-      navigation.goBack();
+      router.back();
     } catch (err) {
       console.log("SAVE RECIPE ERROR:", err);
       setError("Could not save recipe. Please try again.");
@@ -230,7 +230,7 @@ const EditRecipe = ({ route }) => {
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() => router.back()}
             style={styles.headerButton}
           >
             <Text style={{ color: "#000000", fontWeight: "600" }}>Back</Text>
@@ -301,7 +301,7 @@ const EditRecipe = ({ route }) => {
             accessibilityLabel="Choose image"
           >
             <Image
-              source={require("../../../assets/icons/camera.png")}
+              source={require("../../assets/icons/camera.png")}
               style={styles.camera}
             />
           </TouchableOpacity>

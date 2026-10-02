@@ -1,69 +1,5 @@
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { Tabs } from "expo-router/js-tabs";
 import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-
-import HomeScreen from "../tabs/home";
-import CartScreen from "../tabs/cart";
-import PersonalScreen from "../tabs/personal";
-import ProfileScreen from "../tabs/profile";
-import AddRecipeScreen from "../tabs/addRecipe";
-import RecipeDetailScreen from "./recipe/recipeDetail";
-import EditRecipeScreen from "./recipe/editRecipe";
-import JoinFamilyScreen from "./family/joinFamily";
-import CreateFamilyScreen from "./family/createFamily";
-
-const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
-
-const HomeStackScreen = () => (
-  <Stack.Navigator>
-    <Stack.Screen
-      name="HomeList"
-      component={HomeScreen}
-      options={{ headerShown: false }}
-    />
-    <Stack.Screen
-      name="RecipeDetail"
-      component={RecipeDetailScreen}
-      options={{ headerShown: false }}
-    />
-    <Stack.Screen
-      name="EditRecipe"
-      component={EditRecipeScreen}
-      options={{ headerShown: false }}
-    />
-    <Stack.Screen
-      name="JoinFamily"
-      component={JoinFamilyScreen}
-      options={{ headerShown: false }}
-    />
-    <Stack.Screen
-      name="CreateFamily"
-      component={CreateFamilyScreen}
-      options={{ headerShown: false }}
-    />
-  </Stack.Navigator>
-);
-
-const PersonalStackScreen = () => (
-  <Stack.Navigator>
-    <Stack.Screen
-      name="PersonalList"
-      component={PersonalScreen}
-      options={{ headerShown: false }}
-    />
-    <Stack.Screen
-      name="RecipeDetail"
-      component={RecipeDetailScreen}
-      options={{ headerShown: false }}
-    />
-    <Stack.Screen
-      name="EditRecipe"
-      component={EditRecipeScreen}
-      options={{ headerShown: false }}
-    />
-  </Stack.Navigator>
-);
 
 const CustomTabBarButton = ({ children, onPress }) => (
   <TouchableOpacity
@@ -90,9 +26,9 @@ const CustomTabBarButton = ({ children, onPress }) => (
   </TouchableOpacity>
 );
 
-const BottomNav = ({ setAuth }) => {
+const TabsLayout = () => {
   return (
-    <Tab.Navigator
+    <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
@@ -108,9 +44,8 @@ const BottomNav = ({ setAuth }) => {
         },
       }}
     >
-      <Tab.Screen
-        name="Home"
-        component={HomeStackScreen}
+      <Tabs.Screen
+        name="home"
         options={{
           tabBarIcon: ({ focused }) => (
             <Image
@@ -124,9 +59,8 @@ const BottomNav = ({ setAuth }) => {
           ),
         }}
       />
-      <Tab.Screen
-        name="Cart"
-        component={CartScreen}
+      <Tabs.Screen
+        name="cart"
         options={{
           tabBarIcon: ({ focused }) => (
             <Image
@@ -140,9 +74,8 @@ const BottomNav = ({ setAuth }) => {
           ),
         }}
       />
-      <Tab.Screen
-        name="Add"
-        component={AddRecipeScreen}
+      <Tabs.Screen
+        name="add"
         options={{
           tabBarIcon: ({ focused }) => (
             <Image
@@ -159,9 +92,8 @@ const BottomNav = ({ setAuth }) => {
           tabBarButton: (props) => <CustomTabBarButton {...props} />,
         }}
       />
-      <Tab.Screen
-        name="Personal"
-        component={PersonalStackScreen}
+      <Tabs.Screen
+        name="personal"
         options={{
           tabBarIcon: ({ focused }) => (
             <Image
@@ -175,9 +107,8 @@ const BottomNav = ({ setAuth }) => {
           ),
         }}
       />
-      <Tab.Screen
-        name="Profile"
-        children={() => <ProfileScreen setAuth={setAuth} />}
+      <Tabs.Screen
+        name="profile"
         options={{
           tabBarIcon: ({ focused }) => (
             <Image
@@ -191,7 +122,7 @@ const BottomNav = ({ setAuth }) => {
           ),
         }}
       />
-    </Tab.Navigator>
+    </Tabs>
   );
 };
 
@@ -218,4 +149,4 @@ const style = StyleSheet.create({
   }),
 });
 
-export default BottomNav;
+export default TabsLayout;

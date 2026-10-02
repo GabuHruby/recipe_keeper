@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { router, useSegments } from "expo-router";
 
 export const getFilteredRecipes = (
   data,
@@ -97,14 +98,27 @@ export const getFilteredRecipes = (
   return filtered;
 };
 
-const SearchFilter = ({ item }) => {
-  const navigation = useNavigation();
+const SearchFilter = ({
+  item,
+  isFavorite = false,
+  inCart = false,
+  onToggleFavorite,
+  onToggleCart,
+}) => {
+  //Open the recipe inside whichever tab (home or personal) this list is in
+  const [, tab] = useSegments();
+  const [menuVisible, setMenuVisible] = useState(false);
 
   return (
     <View style={styles.recipesContainer}>
       <TouchableOpacity
         style={styles.recipeBox}
-        onPress={() => navigation.navigate("RecipeDetail", { recipe: item })}
+        onPress={() =>
+          router.push({
+            pathname: `/${tab}/recipe`,
+            params: { recipe: JSON.stringify(item) },
+          })
+        }
       >
         <View style={styles.recipeInner}>
           {item.imageUri ? (
@@ -122,16 +136,82 @@ const SearchFilter = ({ item }) => {
               resizeMode="cover"
             />
           )}
-          <Text style={styles.recipeName}>{item.name}</Text>
-          <Text style={styles.recipeAuthor}>{item.author || "Unknown"}</Text>
+          <Text
+            style={styles.recipeName}
+            numberOfLines={2}
+            ellipsizeMode="tail"
+          >
+            {item.name}
+          </Text>
+          <Text
+            style={styles.recipeAuthor}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {item.author || "Unknown"}
+          </Text>
           <View style={styles.recipeBottom}>
             {item.timeMinutes ? (
-              <Text style={styles.recipeTime}>{item.timeMinutes} min</Text>
+              <Text
+                style={styles.recipeTime}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {item.timeMinutes} min
+              </Text>
             ) : (
-              <Text style={styles.recipeTime}>--</Text>
+              <Text
+                style={styles.recipeTime}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                --
+              </Text>
             )}
             <View style={styles.recipeOptionsContainer}>
-              <Text style={styles.recipeOptions}>...</Text>
+              <TouchableOpacity
+                style={styles.recipeOptionsButton}
+                onPress={(event) => {
+                  event.stopPropagation();
+                  setMenuVisible((current) => !current);
+                }}
+              >
+                <Text style={styles.recipeOptions}>...</Text>
+              </TouchableOpacity>
+              {menuVisible ? (
+                <View style={styles.dropdownMenu}>
+                  <TouchableOpacity
+                    style={styles.dropdownItem}
+                    onPress={(event) => {
+                      event.stopPropagation();
+                      setMenuVisible(false);
+                      if (onToggleFavorite) {
+                        onToggleFavorite(item._id, !isFavorite);
+                      }
+                    }}
+                  >
+                    <Text style={styles.dropdownText}>
+                      {isFavorite
+                        ? "Remove from favorites"
+                        : "Add to favorites"}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.dropdownItem}
+                    onPress={(event) => {
+                      event.stopPropagation();
+                      setMenuVisible(false);
+                      if (onToggleCart) {
+                        onToggleCart(item._id, !inCart);
+                      }
+                    }}
+                  >
+                    <Text style={styles.dropdownText}>
+                      {inCart ? "Remove from cart" : "Add to cart"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
             </View>
           </View>
         </View>
@@ -149,6 +229,7 @@ const styles = StyleSheet.create({
   },
   recipeBox: {
     width: "89%",
+    height: 270,
     alignSelf: "center",
     borderRadius: 8,
     backgroundColor: "#f7f2ec",
@@ -159,9 +240,10 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   recipeInner: {
+    flex: 1,
     borderRadius: 8,
     overflow: "hidden",
-    paddingBottom: 10,
+    paddingBottom: 8,
   },
   recipeImage: {
     width: "100%",
@@ -176,31 +258,67 @@ const styles = StyleSheet.create({
     color: "#333",
     paddingLeft: 8,
     paddingTop: 3,
+    paddingRight: 8,
   },
   recipeAuthor: {
     fontSize: 12,
     color: "#666",
     paddingLeft: 8,
+    paddingRight: 8,
     marginTop: 2,
   },
   recipeBottom: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: 8,
-    marginTop: 10,
+    paddingBottom: 8,
+    alignItems: "flex-end",
+    marginTop: "auto",
   },
   recipeTime: {
     fontSize: 12,
-    paddingTop: 14,
     color: "#666",
+    flex: 1,
+    marginRight: 8,
   },
   recipeOptionsContainer: {
+    position: "relative",
     alignItems: "center",
-    paddingBottom: 10,
+    justifyContent: "flex-end",
     paddingRight: 10,
+  },
+  recipeOptionsButton: {
+    minWidth: 30,
+    alignItems: "center",
   },
   recipeOptions: {
     fontSize: 25,
     color: "#666",
+  },
+  dropdownMenu: {
+    position: "absolute",
+    right: 0,
+    bottom: 32,
+    width: 160,
+    backgroundColor: "#ffffff",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#e1d7cd",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.16,
+    shadowRadius: 6,
+    elevation: 6,
+    overflow: "hidden",
+    zIndex: 20,
+  },
+  dropdownItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  dropdownText: {
+    fontSize: 13,
+    color: "#2b2b2b",
+    fontWeight: "600",
   },
 });

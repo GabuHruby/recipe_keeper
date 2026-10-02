@@ -9,12 +9,12 @@ import {
   FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import SearchBar from "../components/navigation/searchBar";
+import SearchBar from "../../../components/navigation/searchBar";
 import SearchFilter, {
   getFilteredRecipes,
-} from "../components/navigation/searchFilter";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import API_BASE_URL from "../../config/api";
+} from "../../../components/navigation/searchFilter";
+import { router, useFocusEffect } from "expo-router";
+import API_BASE_URL from "../../../config/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Search } from "react-native-feather";
 
@@ -22,10 +22,11 @@ const HomeScreen = () => {
   const [recipes, setRecipes] = useState([]);
   const [storedID, setStoredID] = useState(null);
   const [familyId, setFamilyId] = useState(null);
+  const [favoriteIds, setFavoriteIds] = useState([]);
+  const [cartIds, setCartIds] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("date_descending");
-  const Navigation = useNavigation();
 
   const loadUserData = useCallback(async () => {
     try {
@@ -38,10 +39,14 @@ const HomeScreen = () => {
 
       const data = await response.json();
       setFamilyId(data.family || null);
+      setFavoriteIds((data.favoriteRecipes || []).map((id) => id.toString()));
+      setCartIds((data.recipesInCart || []).map((id) => id.toString()));
       await AsyncStorage.setItem("family", data.family || "");
     } catch (err) {
       console.log("Failed to fetch user data:", err);
       setFamilyId(null);
+      setFavoriteIds([]);
+      setCartIds([]);
     }
   }, []);
 
@@ -85,6 +90,72 @@ const HomeScreen = () => {
     return getFilteredRecipes(recipes, search, filter);
   }, [recipes, search, filter]);
 
+  const handleToggleFavorite = useCallback(
+    async (recipeId, add) => {
+      if (!storedID) {
+        return;
+      }
+
+      setFavoriteIds((prev) =>
+        add
+          ? (prev.includes(recipeId) ? prev : [...prev, recipeId])
+          : prev.filter((id) => id !== recipeId),
+      );
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/users/${storedID}/favorites`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ recipeId, add }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to update favorites.");
+        }
+      } catch (err) {
+        setFavoriteIds((prev) =>
+          add
+            ? prev.filter((id) => id !== recipeId)
+            : (prev.includes(recipeId) ? prev : [...prev, recipeId]),
+        );
+      }
+    },
+    [storedID],
+  );
+
+  const handleToggleCart = useCallback(
+    async (recipeId, add) => {
+      if (!storedID) {
+        return;
+      }
+
+      setCartIds((prev) =>
+        add
+          ? (prev.includes(recipeId) ? prev : [...prev, recipeId])
+          : prev.filter((id) => id !== recipeId),
+      );
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/users/${storedID}/cart`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ recipeId, add }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to update cart.");
+        }
+      } catch (err) {
+        setCartIds((prev) =>
+          add
+            ? prev.filter((id) => id !== recipeId)
+            : (prev.includes(recipeId) ? prev : [...prev, recipeId]),
+        );
+      }
+    },
+    [storedID],
+  );
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#f7f2ec" }}>
       {familyId ? (
@@ -104,7 +175,15 @@ const HomeScreen = () => {
           <FlatList
             contentContainerStyle={styles.listContent}
             data={filteredRecipes}
-            renderItem={({ item }) => <SearchFilter item={item} />}
+            renderItem={({ item }) => (
+              <SearchFilter
+                item={item}
+                isFavorite={favoriteIds.includes(item._id)}
+                inCart={cartIds.includes(item._id)}
+                onToggleFavorite={handleToggleFavorite}
+                onToggleCart={handleToggleCart}
+              />
+            )}
             keyExtractor={(item) => item._id.toString()}
             numColumns={2}
             refreshing={refreshing}
@@ -128,7 +207,7 @@ const HomeScreen = () => {
               <TouchableOpacity
                 style={styles.button1}
                 onPress={() => {
-                  Navigation.navigate("JoinFamily");
+                  router.push("/home/join-family");
                 }}
               >
                 <Text style={styles.buttonText}>Join Family</Text>
@@ -136,7 +215,7 @@ const HomeScreen = () => {
               <TouchableOpacity
                 style={styles.button2}
                 onPress={() => {
-                  Navigation.navigate("CreateFamily");
+                  router.push("/home/create-family");
                 }}
               >
                 <Text style={styles.buttonText}>Create Family</Text>

@@ -7,12 +7,11 @@ import {
 } from "react-native";
 import { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
-import API_BASE_URL from "../../../config/api";
+import { router } from "expo-router";
+import API_BASE_URL from "../../config/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const JoinFamily = () => {
-  const navigation = useNavigation();
   const [codeInput, setCodeInput] = useState("");
   const [error, setError] = useState("");
   const [familyId, setFamilyId] = useState(null);
@@ -53,7 +52,7 @@ const JoinFamily = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => router.back()}
           style={styles.headerButton}
         >
           <Text style={{ color: "#000000", fontWeight: "600" }}>Back</Text>
@@ -78,7 +77,7 @@ const JoinFamily = () => {
 
           <TouchableOpacity
             style={styles.primaryButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => router.back()}
           >
             <Text style={styles.primaryButtonText}>Go Back Home</Text>
           </TouchableOpacity>

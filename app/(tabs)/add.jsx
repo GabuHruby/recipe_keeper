@@ -16,12 +16,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { router, useFocusEffect } from "expo-router";
 import API_BASE_URL from "../../config/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const AddRecipe = () => {
-  const navigation = useNavigation();
   const scrollRef = useRef(null);
   const [name, setName] = useState("");
   const [timeMinutes, setTimeMinutes] = useState("");
@@ -201,7 +200,7 @@ const AddRecipe = () => {
       }
       resetForm();
       Alert.alert("Recipe saved!");
-      navigation.navigate("Personal");
+      router.navigate("/personal");
     } catch (err) {
       console.log("SAVE RECIPE ERROR:", err);
       setError("Could not save recipe. Please try again.");

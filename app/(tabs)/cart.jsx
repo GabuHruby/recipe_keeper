@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Checkbox } from "expo-checkbox";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import API_BASE_URL from "../../config/api";
 

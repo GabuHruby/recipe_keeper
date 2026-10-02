@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Logo from "../../assets/images/ia_logo.png";
+import Logo from "../assets/images/ia_logo.png";
 import {
   Image,
   StyleSheet,
@@ -8,36 +8,35 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import API_BASE_URL from "../../config/api";
+import API_BASE_URL from "../config/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 
-const LogInScreen = ({ auth, setAuth }) => {
+const SignupScreen = () => {
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleLogin = async () => {
-    //If there is no email or password
-    if (!email.trim() || !password) {
+  const handleSignup = async () => {
+    if (!username.trim() || !email.trim() || !password) {
       setError("Please fill in all fields.");
       return;
     }
     try {
-      //Send login request to server
-      const response = await fetch(`${API_BASE_URL}/users/login`, {
+      const response = await fetch(`${API_BASE_URL}/users/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          username: username.trim(),
           email: email.trim(),
           password,
         }),
       });
       if (!response.ok) {
-        console.log("Response not ok");
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to log in.");
+        throw new Error(data.error || "Failed to create account.");
       }
-
       const data = await response.json();
       setError("");
       await AsyncStorage.multiSet([
@@ -47,8 +46,7 @@ const LogInScreen = ({ auth, setAuth }) => {
         ["email", data.email || ""],
         ["family", data.family || ""],
       ]);
-      console.log(data.family);
-      setAuth("loggedIn");
+      router.replace("/home");
     } catch (err) {
       setError(err.message || "Please try again.");
     }
@@ -57,9 +55,16 @@ const LogInScreen = ({ auth, setAuth }) => {
   return (
     <View style={styles.container}>
       <Image source={Logo} style={styles.logo} />
-      <Text style={styles.title}>Recipe Keeper</Text>
+      <Text style={styles.title}>Welcome to Recipe Keeper!</Text>
       <Text style={styles.subtitle}>Your personal cooking assistant.</Text>
 
+      <TextInput
+        style={styles.usernameInput}
+        placeholder="Username"
+        placeholderTextColor="#414141ff"
+        value={username}
+        onChangeText={setUsername}
+      />
       <TextInput
         style={styles.emailInput}
         placeholder="Email"
@@ -77,16 +82,17 @@ const LogInScreen = ({ auth, setAuth }) => {
         value={password}
         onChangeText={setPassword}
       />
+
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-      <TouchableOpacity onPress={handleLogin}>
-        <Text style={styles.log_in}>Log In</Text>
+      <TouchableOpacity onPress={handleSignup}>
+        <Text style={styles.log_in}>Sign Up</Text>
       </TouchableOpacity>
 
       <View style={styles.signUpContainer}>
-        <Text style={styles.signUpText}>Don't have an account? </Text>
-        <TouchableOpacity onPress={() => setAuth("signup")}>
-          <Text style={styles.signUpButton}>Sign Up</Text>
+        <Text style={styles.signUpText}>Already have an account? </Text>
+        <TouchableOpacity onPress={() => router.replace("/login")}>
+          <Text style={styles.signUpButton}>Log In</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -108,7 +114,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   title: {
-    fontSize: 35,
+    fontSize: 27,
     fontWeight: "bold",
     marginBottom: 10,
     color: "#333",
@@ -119,7 +125,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: "#666",
   },
-  emailInput: {
+  usernameInput: {
     width: "90%",
     height: 50,
     borderColor: "#ccc",
@@ -127,6 +133,16 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     paddingHorizontal: 15,
     marginTop: 100,
+    marginBottom: 20,
+    backgroundColor: "#cececeff",
+  },
+  emailInput: {
+    width: "90%",
+    height: 50,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 15,
+    paddingHorizontal: 15,
     marginBottom: 20,
     backgroundColor: "#cececeff",
   },
@@ -167,9 +183,9 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: "#b3261e",
-    marginBottom: 12,
+    marginBottom: 5,
     fontWeight: "600",
   },
 });
 
-export default LogInScreen;
+export default SignupScreen;

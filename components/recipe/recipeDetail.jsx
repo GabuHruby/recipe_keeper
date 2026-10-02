@@ -11,16 +11,24 @@ import { useCallback, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import API_BASE_URL from "../../../config/api";
+import {
+  router,
+  useFocusEffect,
+  useLocalSearchParams,
+  useSegments,
+} from "expo-router";
+import API_BASE_URL from "../../config/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const RecipeDetail = ({ route }) => {
-  const navigation = useNavigation();
+const RecipeDetail = () => {
+  const params = useLocalSearchParams();
+  const [, tab] = useSegments();
   const [isOwner, setIsOwner] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [inCart, setInCart] = useState(false);
-  const [recipeData, setRecipeData] = useState(route?.params?.recipe || null);
+  const [recipeData, setRecipeData] = useState(
+    params.recipe ? JSON.parse(params.recipe) : null
+  );
   //Safety check to ensure recipe data exists
   const recipe = recipeData;
 
@@ -135,7 +143,7 @@ const RecipeDetail = ({ route }) => {
         <ScrollView contentContainerStyle={styles.container}>
           <View style={styles.header}>
             <TouchableOpacity
-              onPress={() => navigation.goBack()}
+              onPress={() => router.back()}
               style={styles.headerButton}
             >
               <Text style={{ color: "#000000", fontWeight: "600" }}>Back</Text>
@@ -154,7 +162,12 @@ const RecipeDetail = ({ route }) => {
 
               {isOwner ? (
                 <TouchableOpacity
-                  onPress={() => navigation.navigate("EditRecipe", { recipe })}
+                  onPress={() =>
+                    router.push({
+                      pathname: `/${tab}/edit`,
+                      params: { recipe: JSON.stringify(recipe) },
+                    })
+                  }
                   style={styles.headerButton}
                 >
                   <Text style={{ color: "#000000", fontWeight: "600" }}>

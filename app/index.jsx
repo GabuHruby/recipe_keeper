@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Text, View } from "react-native";
-import BottomNav from "./components/bottomNav";
-import SignUp from "./auth/signup";
-import LogIn from "./auth/login";
+import { Redirect } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Index = () => {
@@ -34,13 +32,7 @@ const Index = () => {
     );
   }
 
-  if (auth === "loggedIn") {
-    return <BottomNav setAuth={setAuth} />;
-  } else if (auth === "signup") {
-    return <SignUp auth={auth} setAuth={setAuth} />;
-  } else {
-    return <LogIn auth={auth} setAuth={setAuth} />;
-  }
+  return <Redirect href={auth === "loggedIn" ? "/home" : "/signup"} />;
 };
 
 export default Index;
